@@ -1,0 +1,3077 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>PROJECT: SIN-KAI - Chapter 5: Sovereign's Wrath</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { background: #000000; color: #e2e8f0; font-family: 'Courier New', monospace; overflow: hidden; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        #vignette { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5; background: radial-gradient(circle, rgba(0,0,0,0) 35%, rgba(0,2,8,0.95) 100%); }
+        #flash-overlay { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 6; background: rgba(0, 240, 255, 0); transition: background 0.05s ease-out; }
+        #danger-overlay { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 7; background: rgba(255, 0, 50, 0); transition: background 0.1s ease; }
+        .cinematic-bar { position: absolute; width: 100%; height: 0; background: #000; z-index: 25; transition: height 0.4s ease; pointer-events: none; }
+        #bar-top { top: 0; } #bar-bottom { bottom: 0; }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border: 1px solid rgba(0, 240, 255, 0.8); border-radius: 50%; pointer-events: none; z-index: 10; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; z-index: 10; }
+        .hud-panel { background: rgba(3, 8, 16, 0.9); border: 1px solid #1a2638; padding: 10px 18px; border-radius: 2px; color: #8a99ad; font-size: 0.8rem; letter-spacing: 1px; box-shadow: 0 0 10px rgba(0,240,255,0.1); }
+        .hud-val { color: #00f0ff; font-weight: bold; }
+        #interaction-prompt { position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); background: rgba(2, 6, 12, 0.95); border: 1px solid #00f0ff; color: #00f0ff; padding: 10px 20px; font-size: 0.85rem; display: none; border-radius: 2px; box-shadow: 0 0 12px rgba(0,240,255,0.3); text-align: center; }
+        #obstacle-warning { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); color: #ff3300; font-size: 1.5rem; font-weight: bold; display: none; z-index: 12; text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; }
+        #subtitle-box { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); background: rgba(1, 3, 8, 0.95); border: 1px solid #00f0ff; color: #e2e8f0; padding: 14px 28px; font-size: 0.95rem; display: none; border-radius: 2px; text-align: center; max-width: 800px; z-index: 30; line-height: 1.6; box-shadow: 0 0 15px rgba(0,240,255,0.15); }
+        .speaker-1978 { color: #00f0ff; font-weight: bold; margin-right: 8px; }
+        .speaker-3302 { color: #33ff66; font-weight: bold; margin-right: 8px; }
+        .speaker-1977 { color: #ff0033; font-weight: bold; margin-right: 8px; font-size: 1.1em; }
+        #log-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px; background: rgba(4, 8, 15, 0.98); border: 1px solid #00f0ff; box-shadow: 0 0 30px rgba(0, 240, 255, 0.2); color: #c8d6e5; padding: 24px; display: none; z-index: 40; pointer-events: auto; }
+        .log-header { border-bottom: 1px solid #1e2d42; padding-bottom: 8px; margin-bottom: 12px; }
+        .log-title { color: #00f0ff; font-size: 1rem; font-weight: bold; }
+        #log-body { font-size: 0.85rem; line-height: 1.8; color: #a4b0be; white-space: pre-wrap; margin-bottom: 20px; max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.5); padding: 16px; border: 1px solid #101d2e; }
+        .btn-close { background: #0d1520; color: #00f0ff; border: 1px solid #00f0ff; padding: 8px 20px; font-family: inherit; cursor: pointer; float: right; }
+        .btn-close:hover { background: #00f0ff; color: #000; }
+        #run-ui { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); width: 420px; display: none; z-index: 10; text-align: center; }
+        .run-bar-bg { width: 100%; height: 12px; background: rgba(5,10,20,0.9); border: 1px solid #00f0ff; border-radius: 2px; position: relative; overflow: hidden; }
+        #player-progress { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: #00f0ff; z-index: 2; transition: width 0.1s linear;}
+        #slime-progress { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: #11ff55; z-index: 1; transition: width 0.1s linear;}
+        #overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 4, 8, 0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; pointer-events: auto; }
+        h1 { color: #00f0ff; font-size: 2.5rem; letter-spacing: 4px; margin-bottom: 12px; text-shadow: 0 0 15px rgba(0,240,255,0.5); }
+        p.desc { color: #718096; margin-bottom: 24px; max-width: 700px; text-align: center; line-height: 1.8; font-size: 0.9rem; white-space: pre-line; }
+        button.start-btn { background: #0f1926; color: #00f0ff; border: 1px solid #00f0ff; padding: 14px 36px; font-family: inherit; font-size: 1rem; cursor: pointer; transition: all 0.2s; letter-spacing: 2px; }
+        button.start-btn:hover { background: #00f0ff; color: #000; box-shadow: 0 0 15px #00f0ff; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="vignette"></div>
+    <div id="flash-overlay"></div>
+    <div id="danger-overlay"></div>
+    <div id="crosshair"></div>
+
+    <div id="bar-top" class="cinematic-bar"></div>
+    <div id="bar-bottom" class="cinematic-bar"></div>
+
+    <div id="subtitle-box"></div>
+    <div id="obstacle-warning"></div>
+
+    <div id="run-ui">
+        <div style="color: #00f0ff; font-weight: bold; margin-bottom: 4px; letter-spacing: 2px; font-size: 0.85rem;">1500m OBSTACLE ESCAPE PROTOCOL</div>
+        <div class="run-bar-bg">
+            <div id="slime-progress"></div>
+            <div id="player-progress"></div>
+        </div>
+        <div style="color: #11ff55; font-size: 0.7rem; margin-top: 4px;">OBSTACLES AHEAD: [C] CROUCH / [SPACE] JUMP / [A/D] WEAVE</div>
+    </div>
+
+    <div id="ui-layer">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="hud-panel">
+                OBJECTIVE: <span id="obj-val" class="hud-val">パネルを操作してシャッターを開放する</span><br>
+                LOCATION: <span id="loc-val" class="hud-val">初期セーフルーム</span>
+            </div>
+            <div class="hud-panel">
+                COMPANION: <span id="comp-val" class="hud-val">ABR1978</span> |
+                DEVICE: <span id="charge-val" class="hud-val">100%</span>
+            </div>
+        </div>
+        <div id="interaction-prompt">[E] 操作する</div>
+        <div class="hud-panel" style="text-align: center; font-size: 0.75rem;">
+            [W/A/S/D] 移動 | [Shift] 走る | [C] しゃがむ | [Space] ジャンプ | [F] 電灯 | [左クリック] 放電 | [E] 調べる/端末で読む
+        </div>
+    </div>
+
+    <div id="log-modal">
+        <div class="log-header"><span class="log-title" id="log-title">端末記録</span></div>
+        <div id="log-body">ログ内容</div>
+        <button class="btn-close" onclick="closeLog()">閉じる [ESC]</button>
+    </div>
+
+    <div id="overlay-screen">
+        <h1 id="screen-title">PROJECT: SIN-KAI</h1>
+        <p class="desc" id="screen-desc">
+            Chapter 5: Sovereign's Wrath - 完全版
+
+            ・1977が3302と1978を物理的に掴み上げるギミックを統合
+            ・最後の部屋の中央付近で1977が強襲
+            ・刺突前に1978を救出できない場合、プレイヤーへ矛先が向き死亡演出が発生
+            ・救出後は電気デバイスを格納し、仰向け状態の1978を搬送
+        </p>
+        <button class="start-btn" id="start-btn" onclick="startGame()">潜入を開始する</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        class AudioSystem {
+            constructor() { this.ctx = null; this.isInit = false; this.hissGain = null; this.voice = null; this.lastFootstepTime = 0; this.droneGain = null; }
+            init() {
+                if (this.isInit) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                this.isInit = true;
+
+                const droneOsc = this.ctx.createOscillator();
+                this.droneGain = this.ctx.createGain();
+                droneOsc.type = 'sawtooth';
+                droneOsc.frequency.setValueAtTime(45, this.ctx.currentTime);
+                const droneFilter = this.ctx.createBiquadFilter();
+                droneFilter.type = 'lowpass'; droneFilter.frequency.setValueAtTime(120, this.ctx.currentTime);
+                this.droneGain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                droneOsc.connect(droneFilter); droneFilter.connect(this.droneGain); this.droneGain.connect(this.ctx.destination);
+                droneOsc.start();
+                this.scheduleMetalCreak();
+            }
+            playFootstep(isSlow, isCrouch) {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.05;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = isSlow ? 'lowpass' : 'bandpass';
+                filter.frequency.setValueAtTime(isSlow ? 300 : 1200, now);
+
+                const gain = this.ctx.createGain();
+                const vol = isCrouch ? 0.05 : (isSlow ? 0.25 : 0.12);
+                gain.gain.setValueAtTime(vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+            }
+            scheduleMetalCreak() {
+                const nextTime = Math.random() * 8000 + 5000;
+                setTimeout(() => {
+                    if (this.isInit) {
+                        const now = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(220, now);
+                        osc.frequency.linearRampToValueAtTime(180, now + 0.8);
+
+                        gain.gain.setValueAtTime(0.02, now);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.8);
+                    }
+                    this.scheduleMetalCreak();
+                }, nextTime);
+            }
+            _noiseBuffer(dur) {
+                const n = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
+                const buffer = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
+                return buffer;
+            }
+            /* ノイズ・バースト（帯域と周波数スイープを指定できる汎用SE） */
+            _burst(o) {
+                if (!this.isInit) return;
+                const now = this.ctx.currentTime;
+                const dur = o.dur || 0.3;
+                const src = this.ctx.createBufferSource();
+                src.buffer = this._noiseBuffer(dur);
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = o.type || 'bandpass';
+                filter.frequency.setValueAtTime(o.freq || 1000, now);
+                if (o.sweepTo) filter.frequency.exponentialRampToValueAtTime(o.sweepTo, now + dur);
+                filter.Q.value = o.q || 1;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(o.vol || 1, now + (o.attack || 0.01));
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+                src.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+                src.start(now);
+            }
+            _tone(o) {
+                if (!this.isInit) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = o.type || 'sawtooth';
+                osc.frequency.setValueAtTime(o.f0, now);
+                osc.frequency.exponentialRampToValueAtTime(o.f1, now + o.dur);
+                gain.gain.setValueAtTime(o.vol || 1, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + o.dur);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + o.dur);
+            }
+            playDischarge() {
+                this._burst({ dur: 0.3, type: 'bandpass', freq: 3500, q: 1, vol: 1.5, attack: 0.004 });
+                this._burst({ dur: 0.18, type: 'highpass', freq: 6000, q: 0.7, vol: 0.8, attack: 0.002 });
+                this._tone({ type: 'square', f0: 900, f1: 60, dur: 0.25, vol: 0.35 });
+            }
+            playHeavyRumble() {
+                this._tone({ type: 'sawtooth', f0: 80, f1: 15, dur: 3.0, vol: 2.0 });
+            }
+            playAlert() {
+                this._tone({ type: 'triangle', f0: 1200, f1: 300, dur: 0.4, vol: 0.8 });
+            }
+            playHit() {
+                this._tone({ type: 'square', f0: 200, f1: 20, dur: 0.4, vol: 1.2 });
+            }
+            playCrash() {   // 壁の破砕
+                this._burst({ dur: 1.1, type: 'lowpass', freq: 900, sweepTo: 120, q: 0.8, vol: 3.0, attack: 0.01 });
+                this._burst({ dur: 0.6, type: 'bandpass', freq: 1800, sweepTo: 400, q: 0.9, vol: 1.6, attack: 0.005 });
+                this._tone({ type: 'sine', f0: 110, f1: 28, dur: 1.2, vol: 2.4 });
+            }
+            playTear() {    // 金属が裂ける音
+                this._burst({ dur: 0.9, type: 'bandpass', freq: 2600, sweepTo: 320, q: 2.5, vol: 1.6, attack: 0.01 });
+                this._tone({ type: 'sawtooth', f0: 240, f1: 38, dur: 0.9, vol: 0.9 });
+            }
+            playExplosion() {
+                this._burst({ dur: 0.9, type: 'lowpass', freq: 1400, sweepTo: 90, q: 0.7, vol: 2.4, attack: 0.004 });
+                this._tone({ type: 'sine', f0: 140, f1: 30, dur: 0.9, vol: 2.0 });
+            }
+            playSteamBurst(vol = 0.5, dur = 0.7) {
+                this._burst({ dur, type: 'highpass', freq: 2600, q: 0.6, vol, attack: 0.03 });
+            }
+            playShutter(dur = 2.0) {   // シャッターのガラガラ音
+                if (!this.isInit) return;
+                const now = this.ctx.currentTime;
+                const src = this.ctx.createBufferSource();
+                src.buffer = this._noiseBuffer(dur);
+                const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 850; bp.Q.value = 1.4;
+                const gain = this.ctx.createGain();
+                const lfo = this.ctx.createOscillator(); lfo.frequency.value = 26;
+                const lfoGain = this.ctx.createGain(); lfoGain.gain.value = 0.35;
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.5, now + 0.08);
+                gain.gain.setValueAtTime(0.5, now + dur - 0.25);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+                lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+                src.connect(bp); bp.connect(gain); gain.connect(this.ctx.destination);
+                src.start(now); lfo.start(now); lfo.stop(now + dur);
+            }
+            playClank() {
+                this._tone({ type: 'square', f0: 320, f1: 90, dur: 0.18, vol: 0.5 });
+                this._burst({ dur: 0.2, type: 'bandpass', freq: 1500, q: 3, vol: 0.5, attack: 0.002 });
+            }
+            playClick() {
+                this._burst({ dur: 0.05, type: 'highpass', freq: 3000, q: 1, vol: 0.5, attack: 0.001 });
+            }
+            /* 蒸気の常時ヒス音：近くの噴出口ほど大きく */
+            setHiss(vol) {
+                if (!this.isInit) return;
+                if (!this.hissGain) {
+                    const src = this.ctx.createBufferSource();
+                    src.buffer = this._noiseBuffer(2.0); src.loop = true;
+                    const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3200;
+                    this.hissGain = this.ctx.createGain(); this.hissGain.gain.value = 0;
+                    src.connect(hp); hp.connect(this.hissGain); this.hissGain.connect(this.ctx.destination);
+                    src.start();
+                }
+                this.hissGain.gain.setTargetAtTime(Math.max(0, Math.min(0.25, vol)), this.ctx.currentTime, 0.15);
+            }
+            /* 音声ログ再生：言葉にならない声の抑揚を合成 */
+            startVoice() {
+                if (!this.isInit) return;
+                this.stopVoice();
+                const ctx = this.ctx;
+                const src = ctx.createBufferSource();
+                src.buffer = this._noiseBuffer(2.0); src.loop = true;
+                const f1 = ctx.createBiquadFilter(); f1.type = 'bandpass'; f1.Q.value = 6; f1.frequency.value = 500;
+                const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.Q.value = 8; f2.frequency.value = 1700;
+                const gain = ctx.createGain(); gain.gain.value = 0;
+                const hiss = ctx.createBiquadFilter(); hiss.type = 'highpass'; hiss.frequency.value = 5000;
+                src.connect(f1); src.connect(f2); f1.connect(gain); f2.connect(gain);
+                src.connect(hiss); hiss.connect(gain);
+                gain.connect(ctx.destination);
+                src.start();
+                let alive = true;
+                const tick = () => {
+                    if (!alive) return;
+                    const t = ctx.currentTime;
+                    const talk = Math.random() < 0.72;
+                    f1.frequency.setTargetAtTime(350 + Math.random() * 450, t, 0.03);
+                    f2.frequency.setTargetAtTime(1100 + Math.random() * 1400, t, 0.03);
+                    gain.gain.setTargetAtTime(talk ? 0.16 + Math.random() * 0.1 : 0.012, t, 0.03);
+                    setTimeout(tick, 110 + Math.random() * 170);
+                };
+                tick();
+                this.voice = { stop: () => { alive = false; try { gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05); src.stop(ctx.currentTime + 0.3); } catch (e) {} } };
+            }
+            stopVoice() { if (this.voice) { this.voice.stop(); this.voice = null; } }
+        }
+        const audioSys = new AudioSystem();
+
+        const SEQ = {
+            START_SAFE: 0,
+            TRAP_ROOM: 1,
+            SAFE_ROOM_2: 2,
+            TUNNEL_ENTER: 3,
+            SLIME_RUN: 4,
+            SECURITY_ROOM: 5,
+            BOSS_AMBUSH_TRIGGERED: 6,
+            BOSS_ATTACK: 7,
+            RESCUED: 8,
+            ESCAPE: 9
+        };
+
+        const state = {
+            step: SEQ.START_SAFE,
+            isPlaying: false,
+            modalOpen: false,
+            inCutscene: false,
+            charge: 100,
+            isCrouching: false,
+            slimeActive: false,
+            trapEnemiesActive: true,
+            trapJammingPlayed: false,
+            targetCamY: 1.6,
+            meet3302CutscenePlayed: false,
+            slimeMoviePlayed: false,
+            file047Read: false,
+            ambushTriggered: false,
+            rescueTimer: 0,
+            isCarrying1978: false,
+            staminaPenalty: 0,
+            subtitleTimer: null,
+            shake: 0
+        };
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010204);
+        scene.fog = new THREE.FogExp2(0x010204, 0.032);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0x2a3a52, 0.72);
+        scene.add(ambientLight);
+
+        const flashlight = new THREE.SpotLight(0xffffff, 2.6, 32, Math.PI / 5, 0.4, 1);
+        camera.add(flashlight);
+        flashlight.position.set(0, 0, 0);
+        flashlight.target.position.set(0, 0, -1);
+        camera.add(flashlight.target);
+        scene.add(camera);
+
+        /* 環境の見えやすさを補う弱い追従ライト（配線や壁のディテールが読める程度） */
+        const fillLight = new THREE.PointLight(0x4d6a8c, 0.9, 18, 2);
+        scene.add(fillLight);
+
+        let carried1978Group = null;
+        const interactables = [];
+        const wallColliders = [];
+        const platformColliders = [];
+        const runObstacles = [];
+        let doors = [];
+        let currentTarget = null;
+
+        /* =====================================================
+           ユーティリティ／テクスチャ生成（錆・汚れ・配線・近未来パネル）
+           ===================================================== */
+        function makeRng(seed) {
+            let a = seed >>> 0;
+            return function () {
+                a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        const DR = makeRng(20440921);                     // 装飾配置用（毎回同じ配置になる）
+        const rrand = (a, b) => a + Math.random() * (b - a);   // 演出用（毎回違ってよい）
+        const dr = (a, b) => a + DR() * (b - a);
+        const clamp01 = v => Math.max(0, Math.min(1, v));
+        const smooth01 = v => { v = clamp01(v); return v * v * (3 - 2 * v); };
+        const MAX_ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
+
+        function mkCanvas(w, h) {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return [c, c.getContext('2d')];
+        }
+        function canvasTexture(c, repeat) {
+            const t = new THREE.CanvasTexture(c);
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.anisotropy = MAX_ANISO;
+            if (repeat) t.repeat.set(repeat[0], repeat[1]);
+            return t;
+        }
+        function cloneRepeat(tex, rx, ry) {
+            const t = tex.clone();
+            t.needsUpdate = true;
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.repeat.set(rx, ry);
+            return t;
+        }
+        const rgb = (r, g, b) => 'rgb(' + Math.max(0, Math.min(255, r | 0)) + ',' + Math.max(0, Math.min(255, g | 0)) + ',' + Math.max(0, Math.min(255, b | 0)) + ')';
+
+        function rustStreaks(x, S, rng, n, alpha) {
+            for (let i = 0; i < n; i++) {
+                const px = rng() * S, py = rng() * S * 0.75, w = 3 + rng() * 20, len = 40 + rng() * S * 0.6;
+                const col = rng() < 0.6 ? '128,60,26' : '96,46,20';
+                const g = x.createLinearGradient(0, py, 0, py + len);
+                g.addColorStop(0, 'rgba(' + col + ',' + (alpha * (0.4 + rng() * 0.6)) + ')');
+                g.addColorStop(1, 'rgba(' + col + ',0)');
+                x.fillStyle = g; x.fillRect(px, py, w, len);
+            }
+        }
+        function rustBlotches(x, S, rng, n, alpha) {
+            for (let i = 0; i < n; i++) {
+                const px = rng() * S, py = rng() * S, r = 8 + rng() * 48;
+                const col = rng() < 0.5 ? '140,66,28' : '104,50,24';
+                const g = x.createRadialGradient(px, py, 0, px, py, r);
+                g.addColorStop(0, 'rgba(' + col + ',' + (alpha * (0.5 + rng() * 0.5)) + ')');
+                g.addColorStop(1, 'rgba(' + col + ',0)');
+                x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+            }
+        }
+        function grimePaint(x, S, rng, alpha) {
+            const g = x.createLinearGradient(0, S * 0.55, 0, S);
+            g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,' + alpha + ')');
+            x.fillStyle = g; x.fillRect(0, 0, S, S);
+            for (let i = 0; i < 26; i++) {
+                const px = rng() * S, py = rng() * S, r = 10 + rng() * 55;
+                const gg = x.createRadialGradient(px, py, 0, px, py, r);
+                gg.addColorStop(0, 'rgba(0,0,0,' + (alpha * 0.55 * rng()) + ')'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = gg; x.fillRect(px - r, py - r, r * 2, r * 2);
+            }
+            // 水垂れの筋
+            for (let i = 0; i < 14; i++) {
+                const px = rng() * S, py = rng() * S * 0.5, len = 60 + rng() * 220;
+                const gg = x.createLinearGradient(0, py, 0, py + len);
+                gg.addColorStop(0, 'rgba(0,0,0,0)'); gg.addColorStop(0.3, 'rgba(0,0,0,' + (alpha * 0.5) + ')'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = gg; x.fillRect(px, py, 2 + rng() * 5, len);
+            }
+        }
+        function scratchPaint(x, S, rng, n) {
+            x.lineWidth = 1;
+            for (let i = 0; i < n; i++) {
+                x.strokeStyle = 'rgba(190,205,220,' + (0.05 + rng() * 0.12) + ')';
+                const px = rng() * S, py = rng() * S, a = rng() * 6.28, l = 6 + rng() * 40;
+                x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke();
+            }
+        }
+        function paintChips(x, S, rng, n) {
+            for (let i = 0; i < n; i++) {
+                x.fillStyle = 'rgba(' + (60 + rng() * 60) + ',' + (70 + rng() * 60) + ',' + (80 + rng() * 60) + ',0.35)';
+                x.fillRect(rng() * S, rng() * S, 2 + rng() * 9, 2 + rng() * 5);
+            }
+        }
+
+        /* 壁：パネル継ぎ目・リベット・発光ライン・錆・汚れ */
+        function paintWall(seed, o) {
+            const rng = makeRng(seed);
+            const S = 512;
+            const [c, x] = mkCanvas(S, S), [bc, bx] = mkCanvas(S, S), [ec, ex] = mkCanvas(S, S);
+            const tone = o.tone || [26, 34, 46];
+            let g = x.createLinearGradient(0, 0, 0, S);
+            g.addColorStop(0, rgb(tone[0] + 8, tone[1] + 8, tone[2] + 8)); g.addColorStop(1, rgb(tone[0] - 6, tone[1] - 6, tone[2] - 6));
+            x.fillStyle = g; x.fillRect(0, 0, S, S);
+            bx.fillStyle = '#8a8a8a'; bx.fillRect(0, 0, S, S);
+            ex.fillStyle = '#000'; ex.fillRect(0, 0, S, S);
+            const cols = 2, rows = 2, pw = S / cols, ph = S / rows;
+            for (let j = 0; j < rows; j++) {
+                for (let i = 0; i < cols; i++) {
+                    const px = i * pw, py = j * ph, v = (rng() - 0.5) * 16;
+                    x.fillStyle = rgb(tone[0] + v + 6, tone[1] + v + 8, tone[2] + v + 10); x.fillRect(px + 3, py + 3, pw - 6, ph - 6);
+                    x.strokeStyle = 'rgba(100,125,150,0.35)'; x.lineWidth = 2; x.strokeRect(px + 16, py + 16, pw - 32, ph - 32);
+                    bx.strokeStyle = '#5c5c5c'; bx.lineWidth = 4; bx.strokeRect(px + 16, py + 16, pw - 32, ph - 32);
+                    x.fillStyle = '#05070a'; x.fillRect(px, py, pw, 3); x.fillRect(px, py, 3, ph);
+                    bx.fillStyle = '#242424'; bx.fillRect(px, py, pw, 4); bx.fillRect(px, py, 4, ph);
+                    x.fillStyle = 'rgba(140,165,190,0.22)'; x.fillRect(px, py + 3, pw, 1); x.fillRect(px + 3, py, 1, ph);
+                    for (const p of [[10, 10], [pw - 10, 10], [10, ph - 10], [pw - 10, ph - 10], [pw / 2, 10], [pw / 2, ph - 10]]) {
+                        x.fillStyle = '#0b0f15'; x.beginPath(); x.arc(px + p[0], py + p[1], 4, 0, 6.28); x.fill();
+                        x.fillStyle = 'rgba(150,170,190,0.35)'; x.beginPath(); x.arc(px + p[0] - 1, py + p[1] - 1, 1.6, 0, 6.28); x.fill();
+                        bx.fillStyle = '#f0f0f0'; bx.beginPath(); bx.arc(px + p[0], py + p[1], 4, 0, 6.28); bx.fill();
+                    }
+                    if (rng() < (o.glow === undefined ? 0.55 : o.glow)) {   // 近未来的な発光ライン
+                        const gc = o.glowColor || '#12e3ff';
+                        for (const ctx of [ex, x]) {
+                            ctx.strokeStyle = ctx === ex ? gc : 'rgba(18,227,255,0.5)';
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(px + 22, py + ph * 0.74); ctx.lineTo(px + pw * 0.5, py + ph * 0.74);
+                            ctx.lineTo(px + pw * 0.58, py + ph * 0.64); ctx.lineTo(px + pw - 22, py + ph * 0.64);
+                            ctx.stroke();
+                        }
+                    }
+                    if (rng() < 0.4) {   // ステンシル番号
+                        x.fillStyle = 'rgba(210,220,230,0.32)'; x.font = 'bold 26px monospace';
+                        x.fillText(String(10 + Math.floor(rng() * 89)) + '-' + String.fromCharCode(65 + Math.floor(rng() * 6)), px + 30, py + 60);
+                    }
+                    if (rng() < (o.hazard || 0.2)) {   // 警告ストライプ（擦れて薄い）
+                        for (let k = 0; k < pw; k += 26) {
+                            x.fillStyle = 'rgba(214,161,0,0.55)';
+                            x.beginPath(); x.moveTo(px + k, py + ph - 14); x.lineTo(px + k + 13, py + ph - 14); x.lineTo(px + k + 3, py + ph - 4); x.lineTo(px + k - 10, py + ph - 4); x.fill();
+                        }
+                    }
+                }
+            }
+            rustStreaks(x, S, rng, Math.floor(30 * (o.rust === undefined ? 0.6 : o.rust)), 0.5);
+            rustBlotches(x, S, rng, Math.floor(26 * (o.rust === undefined ? 0.6 : o.rust)), 0.45);
+            rustBlotches(bx, S, rng, 10, 0.25);
+            grimePaint(x, S, rng, o.grime === undefined ? 0.55 : o.grime);
+            scratchPaint(x, S, rng, 90);
+            paintChips(x, S, rng, 46);
+            return { map: canvasTexture(c), bump: canvasTexture(bc), emissive: canvasTexture(ec) };
+        }
+
+        /* 床：ダイヤ板・継ぎ目・オイル染み・錆・ガイドライン */
+        function paintFloor(seed, o) {
+            const rng = makeRng(seed);
+            const S = 512;
+            const [c, x] = mkCanvas(S, S), [bc, bx] = mkCanvas(S, S), [ec, ex] = mkCanvas(S, S);
+            x.fillStyle = '#0d1219'; x.fillRect(0, 0, S, S);
+            bx.fillStyle = '#787878'; bx.fillRect(0, 0, S, S);
+            ex.fillStyle = '#000'; ex.fillRect(0, 0, S, S);
+            const n = 4, pl = S / n;
+            for (let j = 0; j < n; j++) {
+                for (let i = 0; i < n; i++) {
+                    const px = i * pl, py = j * pl, v = (rng() - 0.5) * 12;
+                    x.fillStyle = rgb(19 + v, 25 + v, 33 + v); x.fillRect(px + 2, py + 2, pl - 4, pl - 4);
+                    // ダイヤ模様
+                    x.strokeStyle = 'rgba(120,140,160,0.20)'; x.lineWidth = 2;
+                    bx.strokeStyle = '#d0d0d0'; bx.lineWidth = 3;
+                    for (let k = 0; k < 5; k++) {
+                        for (let m = 0; m < 5; m++) {
+                            const cx = px + 12 + k * 22 + ((m % 2) ? 11 : 0), cy = py + 10 + m * 24;
+                            x.beginPath(); x.moveTo(cx - 6, cy + 4); x.lineTo(cx + 6, cy - 4); x.stroke();
+                            bx.beginPath(); bx.moveTo(cx - 6, cy + 4); bx.lineTo(cx + 6, cy - 4); bx.stroke();
+                        }
+                    }
+                    x.fillStyle = '#04060a'; x.fillRect(px, py, pl, 3); x.fillRect(px, py, 3, pl);
+                    bx.fillStyle = '#1e1e1e'; bx.fillRect(px, py, pl, 4); bx.fillRect(px, py, 4, pl);
+                    for (const p of [[8, 8], [pl - 8, 8], [8, pl - 8], [pl - 8, pl - 8]]) {
+                        x.fillStyle = '#080b10'; x.beginPath(); x.arc(px + p[0], py + p[1], 3.5, 0, 6.28); x.fill();
+                    }
+                }
+            }
+            // オイル染み（暗く艶のある）
+            for (let i = 0; i < 9; i++) {
+                const px = rng() * S, py = rng() * S, r = 20 + rng() * 60;
+                const g = x.createRadialGradient(px, py, 0, px, py, r);
+                g.addColorStop(0, 'rgba(0,0,0,0.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+            }
+            rustBlotches(x, S, rng, Math.floor(26 * (o.rust === undefined ? 0.6 : o.rust)), 0.42);
+            grimePaint(x, S, rng, 0.35);
+            scratchPaint(x, S, rng, 160);
+            // 黄色いガイドライン（欠けている）と発光ライン
+            if (o.guide !== false) {
+                for (let i = 0; i < 6; i++) {
+                    x.fillStyle = 'rgba(214,161,0,0.42)'; x.fillRect(pl * 0 + 6, i * 86 + 6, 5, 60);
+                }
+                ex.fillStyle = '#0fd7f5'; ex.fillRect(S - 9, 0, 3, S * 0.55);
+                x.fillStyle = 'rgba(15,215,245,0.4)'; x.fillRect(S - 9, 0, 3, S * 0.55);
+            }
+            return { map: canvasTexture(c), bump: canvasTexture(bc), emissive: canvasTexture(ec) };
+        }
+
+        /* 天井：パネル・ダクト継ぎ目・通気口・汚れ */
+        function paintCeiling(seed) {
+            const rng = makeRng(seed);
+            const S = 512;
+            const [c, x] = mkCanvas(S, S), [bc, bx] = mkCanvas(S, S);
+            x.fillStyle = '#0c1118'; x.fillRect(0, 0, S, S);
+            bx.fillStyle = '#808080'; bx.fillRect(0, 0, S, S);
+            for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+                const px = i * 256, py = j * 256, v = (rng() - 0.5) * 10;
+                x.fillStyle = rgb(16 + v, 22 + v, 30 + v); x.fillRect(px + 3, py + 3, 250, 250);
+                x.fillStyle = '#04060a'; x.fillRect(px, py, 256, 4); x.fillRect(px, py, 4, 256);
+                bx.fillStyle = '#222'; bx.fillRect(px, py, 256, 5); bx.fillRect(px, py, 5, 256);
+                if (rng() < 0.6) {   // 通気口グリル
+                    x.fillStyle = '#05080c'; x.fillRect(px + 60, py + 90, 136, 70);
+                    for (let k = 0; k < 8; k++) { x.fillStyle = 'rgba(120,140,160,0.25)'; x.fillRect(px + 64, py + 94 + k * 8, 128, 2); bx.fillStyle = '#e0e0e0'; bx.fillRect(px + 64, py + 94 + k * 8, 128, 3); }
+                }
+            }
+            rustStreaks(x, S, rng, 22, 0.45);
+            rustBlotches(x, S, rng, 16, 0.4);
+            grimePaint(x, S, rng, 0.6);
+            scratchPaint(x, S, rng, 50);
+            return { map: canvasTexture(c), bump: canvasTexture(bc) };
+        }
+
+        /* パイプ：帯とリベット・錆 */
+        function paintPipe(seed) {
+            const rng = makeRng(seed);
+            const [c, x] = mkCanvas(256, 256);
+            const g = x.createLinearGradient(0, 0, 256, 0);
+            g.addColorStop(0, '#171d26'); g.addColorStop(0.5, '#2a3340'); g.addColorStop(1, '#141a22');
+            x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 4; i++) { x.fillStyle = '#0a0d12'; x.fillRect(0, i * 64 + 30, 256, 6); x.fillStyle = 'rgba(160,175,190,0.25)'; x.fillRect(0, i * 64 + 36, 256, 1.5); }
+            for (let i = 0; i < 4; i++) for (let k = 0; k < 8; k++) { x.fillStyle = '#0a0d12'; x.beginPath(); x.arc(k * 32 + 16, i * 64 + 24, 3, 0, 6.28); x.fill(); }
+            rustStreaks(x, 256, rng, 16, 0.55);
+            rustBlotches(x, 256, rng, 14, 0.5);
+            grimePaint(x, 256, rng, 0.5);
+            return canvasTexture(c);
+        }
+
+        /* シャッターのスラット（波板） */
+        function paintSlats(seed, o) {
+            const rng = makeRng(seed);
+            const S = 256;
+            const [c, x] = mkCanvas(S, S), [bc, bx] = mkCanvas(S, S);
+            const base = o.base || [70, 78, 90];
+            const n = 8, h = S / n;
+            for (let i = 0; i < n; i++) {
+                const y = i * h, v = (rng() - 0.5) * 10;
+                const g = x.createLinearGradient(0, y, 0, y + h);
+                g.addColorStop(0, rgb(base[0] + 30 + v, base[1] + 30 + v, base[2] + 30 + v));
+                g.addColorStop(0.35, rgb(base[0] + v, base[1] + v, base[2] + v));
+                g.addColorStop(1, rgb(base[0] - 34 + v, base[1] - 34 + v, base[2] - 34 + v));
+                x.fillStyle = g; x.fillRect(0, y, S, h);
+                x.fillStyle = 'rgba(0,0,0,0.75)'; x.fillRect(0, y + h - 2, S, 2);
+                x.fillStyle = 'rgba(255,255,255,0.13)'; x.fillRect(0, y + 1, S, 1);
+                const bg = bx.createLinearGradient(0, y, 0, y + h);
+                bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.5, '#a0a0a0'); bg.addColorStop(1, '#101010');
+                bx.fillStyle = bg; bx.fillRect(0, y, S, h);
+                // ヒンジのつなぎ目
+                for (let k = 0; k < 4; k++) { x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(k * 64 + ((i % 2) ? 32 : 0), y + 4, 2, h - 8); }
+            }
+            if (o.paint) {   // 塗装（剥がれ）
+                x.globalAlpha = 0.6; x.fillStyle = o.paint; x.fillRect(0, 0, S, S); x.globalAlpha = 1;
+                for (let i = 0; i < 60; i++) { x.fillStyle = 'rgba(' + o.base.join(',') + ',0.85)'; x.fillRect(rng() * S, rng() * S, 4 + rng() * 22, 2 + rng() * 6); }
+                // 焼き付けたようなストライプ帯は別メッシュで表現
+            }
+            rustStreaks(x, S, rng, 16, 0.6);
+            rustBlotches(x, S, rng, 16, 0.5);
+            grimePaint(x, S, rng, 0.55);
+            scratchPaint(x, S, rng, 80);
+            // 凹み（へこみ）
+            for (let i = 0; i < 5; i++) {
+                const px = rng() * S, py = rng() * S, r = 14 + rng() * 22;
+                const g = x.createRadialGradient(px, py, 0, px, py, r);
+                g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+            }
+            return { map: canvasTexture(c), bump: canvasTexture(bc) };
+        }
+
+        /* ハザードストライプ（シャッター下端のバー用） */
+        function paintHazard() {
+            const [c, x] = mkCanvas(256, 64);
+            x.fillStyle = '#c99700'; x.fillRect(0, 0, 256, 64);
+            x.fillStyle = '#14161a';
+            for (let i = -64; i < 320; i += 48) { x.beginPath(); x.moveTo(i, 64); x.lineTo(i + 24, 64); x.lineTo(i + 24 + 64, 0); x.lineTo(i + 64, 0); x.fill(); }
+            const rng = makeRng(77);
+            rustBlotches(x, 256, rng, 8, 0.4);
+            grimePaint(x, 64, rng, 0.5);
+            return canvasTexture(c);
+        }
+
+        /* 端末画面（壁面ホログラム・モニタ） */
+        function paintScreen(seed, kind) {
+            const rng = makeRng(seed);
+            const [c, x] = mkCanvas(256, 160);
+            x.fillStyle = '#031017'; x.fillRect(0, 0, 256, 160);
+            const col = kind === 'alert' ? '#ff3a4a' : (kind === 'green' ? '#33ff88' : '#22e6ff');
+            x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 2;
+            x.strokeRect(4, 4, 248, 152);
+            if (kind === 'dead') {
+                for (let i = 0; i < 900; i++) { x.fillStyle = 'rgba(120,150,160,' + (rng() * 0.35) + ')'; x.fillRect(rng() * 256, rng() * 160, 2, 2); }
+                x.fillStyle = '#aaa'; x.font = '14px monospace'; x.fillText('NO SIGNAL', 88, 84);
+            } else {
+                x.font = '11px monospace';
+                const words = ['SYS', 'PRESS', 'TEMP', 'CORE', 'NODE', 'LINK', 'UNIT', 'FLOW'];
+                for (let i = 0; i < 6; i++) { x.globalAlpha = 0.85; x.fillText(words[(i + Math.floor(rng() * 8)) % 8] + ' ' + (rng() * 99).toFixed(1) + (kind === 'alert' ? '  !!' : '  OK'), 12, 22 + i * 14); }
+                x.globalAlpha = 1;
+                x.beginPath(); x.moveTo(12, 140);
+                for (let i = 0; i < 30; i++) x.lineTo(12 + i * 7.8, 118 + rng() * 30);
+                x.stroke();
+                for (let i = 0; i < 8; i++) { x.globalAlpha = 0.6; x.fillRect(150 + i * 12, 60 - rng() * 40, 8, 10 + rng() * 40); }
+                x.globalAlpha = 1;
+            }
+            for (let y = 0; y < 160; y += 3) { x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, y, 256, 1); }
+            const t = new THREE.CanvasTexture(c);
+            t.anisotropy = MAX_ANISO;
+            return t;
+        }
+
+        /* デカール（弾痕・焦げ跡・錆垂れ・スライム痕・亀裂・油） */
+        function paintDecal(kind) {
+            const rng = makeRng(kind.length * 977 + kind.charCodeAt(0) * 31);
+            const S = 128;
+            const [c, x] = mkCanvas(S, S);
+            const blot = (rgbs, a, n, spread, r0) => {
+                for (let i = 0; i < n; i++) {
+                    const ox = 64 + (rng() - 0.5) * spread, oy = 64 + (rng() - 0.5) * spread, r = r0 + rng() * r0;
+                    const g = x.createRadialGradient(ox, oy, 0, ox, oy, r);
+                    g.addColorStop(0, 'rgba(' + rgbs + ',' + a + ')'); g.addColorStop(0.55, 'rgba(' + rgbs + ',' + (a * 0.5) + ')'); g.addColorStop(1, 'rgba(' + rgbs + ',0)');
+                    x.fillStyle = g; x.fillRect(0, 0, S, S);
+                }
+            };
+            if (kind === 'bullet') {
+                blot('0,0,0', 0.5, 3, 20, 20);
+                x.fillStyle = 'rgba(0,0,0,0.95)'; x.beginPath(); x.arc(64, 64, 5, 0, 6.28); x.fill();
+                x.strokeStyle = 'rgba(160,175,190,0.55)'; x.lineWidth = 1.5; x.beginPath(); x.arc(64, 64, 7.5, 0, 6.28); x.stroke();
+                x.strokeStyle = 'rgba(0,0,0,0.6)'; x.lineWidth = 1;
+                for (let i = 0; i < 7; i++) { const a = rng() * 6.28, l = 12 + rng() * 24; x.beginPath(); x.moveTo(64 + Math.cos(a) * 7, 64 + Math.sin(a) * 7); x.lineTo(64 + Math.cos(a) * l, 64 + Math.sin(a) * l); x.stroke(); }
+            } else if (kind === 'scorch') {
+                blot('0,0,0', 0.8, 7, 44, 24);
+                blot('30,20,10', 0.5, 4, 40, 18);
+            } else if (kind === 'rustdrip') {
+                for (let i = 0; i < 6; i++) {
+                    const px = 30 + rng() * 68, len = 40 + rng() * 80;
+                    const g = x.createLinearGradient(0, 0, 0, len);
+                    g.addColorStop(0, 'rgba(120,58,26,0.7)'); g.addColorStop(1, 'rgba(120,58,26,0)');
+                    x.fillStyle = g; x.fillRect(px, 0, 3 + rng() * 6, len);
+                }
+                blot('120,58,26', 0.55, 3, 30, 16);
+            } else if (kind === 'slimeresidue') {
+                blot('16,185,129', 0.45, 6, 50, 20);
+                blot('8,90,60', 0.5, 3, 30, 14);
+            } else if (kind === 'crack') {
+                x.strokeStyle = 'rgba(0,0,0,0.9)'; x.lineWidth = 2;
+                const branch = (px, py, ang, len, depth) => {
+                    if (depth > 4 || len < 5) return;
+                    const nx = px + Math.cos(ang) * len, ny = py + Math.sin(ang) * len;
+                    x.beginPath(); x.moveTo(px, py); x.lineTo(nx, ny); x.stroke();
+                    branch(nx, ny, ang + (rng() - 0.5) * 0.9, len * 0.78, depth + 1);
+                    if (rng() < 0.5) branch(nx, ny, ang + (rng() - 0.5) * 2.0, len * 0.6, depth + 1);
+                };
+                for (let i = 0; i < 6; i++) branch(64, 64, rng() * 6.28, 22 + rng() * 10, 0);
+            } else if (kind === 'oil') {
+                blot('4,6,8', 0.9, 6, 40, 22);
+                blot('20,30,40', 0.3, 3, 30, 10);
+            }
+            const t = new THREE.CanvasTexture(c);
+            return t;
+        }
+
+        /* 火花・煙・埃・グロー用のスプライトテクスチャ */
+        function paintSprite(kind) {
+            const rng = makeRng(kind.length * 313 + 7);
+            const S = 128;
+            const [c, x] = mkCanvas(S, S);
+            if (kind === 'puff') {   // 蒸気・煙のもくもく
+                for (let i = 0; i < 14; i++) {
+                    const ox = 64 + (rng() - 0.5) * 46, oy = 64 + (rng() - 0.5) * 46, r = 18 + rng() * 30;
+                    const g = x.createRadialGradient(ox, oy, 0, ox, oy, r);
+                    g.addColorStop(0, 'rgba(255,255,255,' + (0.12 + rng() * 0.12) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+                    x.fillStyle = g; x.fillRect(0, 0, S, S);
+                }
+                const m = x.createRadialGradient(64, 64, 20, 64, 64, 64);   // 縁をなじませる
+                m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)');
+                x.globalCompositeOperation = 'destination-out'; x.fillStyle = m; x.fillRect(0, 0, S, S); x.globalCompositeOperation = 'source-over';
+            } else if (kind === 'glow') {
+                const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+                g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.18, 'rgba(255,255,255,0.75)'); g.addColorStop(0.5, 'rgba(255,255,255,0.15)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+                x.fillStyle = g; x.fillRect(0, 0, S, S);
+            } else {   // dust
+                const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+                g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.4, 'rgba(255,255,255,0.3)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+                x.fillStyle = g; x.fillRect(0, 0, S, S);
+            }
+            const t = new THREE.CanvasTexture(c);
+            return t;
+        }
+
+        /* Box の UV を面積比に合わせ、テクスチャの密度を一定にする */
+        function fixBoxUV(geo, w, h, d, tile) {
+            const uv = geo.attributes.uv;
+            const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+            for (let f = 0; f < 6; f++) {
+                for (let v = 0; v < 4; v++) {
+                    const i = f * 4 + v;
+                    uv.setXY(i, uv.getX(i) * dims[f][0] / tile, uv.getY(i) * dims[f][1] / tile);
+                }
+            }
+            uv.needsUpdate = true;
+            return geo;
+        }
+
+        /* 複数のジオメトリを1つにまとめる（描画コール削減用） */
+        function mergeGeos(list) {
+            const parts = list.map(g => (g.index ? g.toNonIndexed() : g));
+            let total = 0;
+            parts.forEach(g => total += g.attributes.position.count);
+            const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), uvs = new Float32Array(total * 2);
+            let po = 0, uo = 0;
+            parts.forEach(g => {
+                pos.set(g.attributes.position.array, po);
+                if (g.attributes.normal) nor.set(g.attributes.normal.array, po);
+                if (g.attributes.uv) uvs.set(g.attributes.uv.array, uo);
+                po += g.attributes.position.count * 3;
+                uo += g.attributes.position.count * 2;
+            });
+            const out = new THREE.BufferGeometry();
+            out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+            out.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            return out;
+        }
+
+        /* ---- 共有テクスチャ／マテリアル ---- */
+        const TEX = {
+            wallClean: paintWall(11, { tone: [30, 40, 54], rust: 0.3, glow: 0.65, grime: 0.42, hazard: 0.12 }),
+            wallRust: paintWall(23, { tone: [26, 32, 42], rust: 1.0, glow: 0.4, grime: 0.7, hazard: 0.3, glowColor: '#ff7a1a' }),
+            floor: paintFloor(31, { rust: 0.7 }),
+            floorClean: paintFloor(37, { rust: 0.3 }),
+            ceiling: paintCeiling(41),
+            pipe: paintPipe(53),
+            slatDoor: paintSlats(61, { base: [72, 80, 92] }),
+            slatHazard: paintSlats(67, { base: [150, 70, 30], paint: 'rgba(150,50,20,0.7)' }),
+            hazard: paintHazard(),
+            screens: [paintScreen(1, 'cyan'), paintScreen(2, 'green'), paintScreen(3, 'alert'), paintScreen(4, 'dead')],
+            decal: { bullet: paintDecal('bullet'), scorch: paintDecal('scorch'), rustdrip: paintDecal('rustdrip'), slime: paintDecal('slimeresidue'), crack: paintDecal('crack'), oil: paintDecal('oil') },
+            sprite: { puff: paintSprite('puff'), glow: paintSprite('glow'), dust: paintSprite('dust') }
+        };
+        function surfMat(set, o) {
+            o = o || {};
+            return new THREE.MeshStandardMaterial({
+                map: set.map, bumpMap: set.bump, bumpScale: o.bump === undefined ? 1.6 : o.bump,
+                emissive: 0xffffff, emissiveMap: set.emissive || null, emissiveIntensity: set.emissive ? (o.glow === undefined ? 0.9 : o.glow) : 0,
+                roughness: o.rough === undefined ? 0.74 : o.rough, metalness: o.metal === undefined ? 0.42 : o.metal
+            });
+        }
+        const MAT = {
+            wall: surfMat(TEX.wallClean),
+            wallRust: surfMat(TEX.wallRust),
+            floor: surfMat(TEX.floor, { rough: 0.62, metal: 0.5 }),
+            floorClean: surfMat(TEX.floorClean, { rough: 0.6, metal: 0.5 }),
+            ceiling: new THREE.MeshStandardMaterial({ map: TEX.ceiling.map, bumpMap: TEX.ceiling.bump, bumpScale: 1.3, roughness: 0.85, metalness: 0.3 }),
+            pipe: new THREE.MeshStandardMaterial({ map: TEX.pipe, roughness: 0.6, metalness: 0.6 }),
+            steel: new THREE.MeshStandardMaterial({ color: 0x232a34, roughness: 0.55, metalness: 0.75 }),
+            steelDark: new THREE.MeshStandardMaterial({ color: 0x12161c, roughness: 0.5, metalness: 0.8 }),
+            rustSteel: new THREE.MeshStandardMaterial({ color: 0x4a2f22, roughness: 0.9, metalness: 0.45 }),
+            cableBlack: new THREE.MeshStandardMaterial({ color: 0x0b0d10, roughness: 0.65, metalness: 0.2 }),
+            cableBlue: new THREE.MeshStandardMaterial({ color: 0x123a66, roughness: 0.6, metalness: 0.2 }),
+            cableRed: new THREE.MeshStandardMaterial({ color: 0x6a1518, roughness: 0.6, metalness: 0.2 }),
+            cableYellow: new THREE.MeshStandardMaterial({ color: 0x8a6a10, roughness: 0.6, metalness: 0.2 }),
+            lightOn: new THREE.MeshBasicMaterial({ color: 0xbfefff }),
+            lightWarm: new THREE.MeshBasicMaterial({ color: 0xffb060 }),
+            lightRed: new THREE.MeshBasicMaterial({ color: 0xff2a2a }),
+            lightCyan: new THREE.MeshBasicMaterial({ color: 0x22e6ff }),
+            lightDead: new THREE.MeshStandardMaterial({ color: 0x1a1f26, roughness: 0.6 })
+        };
+
+        /* =====================================================
+           [E]で起動する場所→壁埋め込みの押しボタン(背後に機械箱)
+           電撃デバイスで起動する場所→いかにも電気の供給口なプラグソケット
+           ===================================================== */
+        function createButtonPanel(x, y, z, ry, o) {
+            o = o || {};
+            const g = new THREE.Group();
+            const boxMat = new THREE.MeshStandardMaterial({ color: 0x1c2530, metalness: 0.6, roughness: 0.5 });
+            const box = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.16), boxMat);
+            g.add(box);
+            const plate = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.30, 0.02), new THREE.MeshStandardMaterial({ color: 0x0e141c, metalness: 0.7, roughness: 0.35 }));
+            plate.position.z = 0.09; g.add(plate);
+            for (const [bx, by] of [[-0.11, 0.11], [0.11, 0.11], [-0.11, -0.11], [0.11, -0.11]]) {
+                const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.018, 8), new THREE.MeshStandardMaterial({ color: 0x33383f, metalness: 0.8, roughness: 0.3 }));
+                bolt.rotation.x = Math.PI / 2; bolt.position.set(bx, by, 0.10); g.add(bolt);
+            }
+            const btnColor = o.color === undefined ? 0xff9d1f : o.color;
+            const btnMat = new THREE.MeshStandardMaterial({ color: 0x2a1b08, emissive: btnColor, emissiveIntensity: 1.3, metalness: 0.4, roughness: 0.4 });
+            const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.09, 0.045, 20), btnMat);
+            btn.rotation.x = Math.PI / 2; btn.position.z = 0.115; g.add(btn);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.008, 8, 20), new THREE.MeshStandardMaterial({ color: 0x555b62, metalness: 0.7, roughness: 0.3 }));
+            ring.position.z = 0.10; g.add(ring);
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.05), new THREE.MeshBasicMaterial({ color: 0x0a0f16 }));
+            label.position.set(0, -0.135, 0.091); g.add(label);
+            g._btnMat = btnMat;
+            if (o.withHousing !== false) {
+                const housing = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.28), new THREE.MeshStandardMaterial({ color: 0x14181f, metalness: 0.7, roughness: 0.55 }));
+                housing.position.z = -0.18; g.add(housing);
+                for (let i = 0; i < 3; i++) {
+                    const vent = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.02, 0.01), new THREE.MeshStandardMaterial({ color: 0x05070a }));
+                    vent.position.set(0, -0.28 + i * 0.06, -0.04); g.add(vent);
+                }
+                const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.4, 8), new THREE.MeshStandardMaterial({ color: 0x0b0d10, roughness: 0.7 }));
+                cable.rotation.z = Math.PI / 2; cable.position.set(0.2, -0.38, -0.2); g.add(cable);
+                const led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), new THREE.MeshStandardMaterial({ color: 0x113322, emissive: 0x22ff88, emissiveIntensity: 1.2 }));
+                led.position.set(0.18, 0.28, -0.045); g.add(led);
+            }
+            g.position.set(x, y, z); g.rotation.y = ry || 0;
+            scene.add(g);
+            return g;
+        }
+        /* ボタンを押した時の演出（凹む＋色が変わる） */
+        function pressButtonPanel(panel, activeColor) {
+            if (!panel || !panel._btnMat) return;
+            const mat = panel._btnMat;
+            mat.emissive.setHex(activeColor === undefined ? 0x33ff88 : activeColor);
+            mat.emissiveIntensity = 2.2;
+            const btn = panel.children.find(c => c.geometry && c.geometry.type === 'CylinderGeometry' && c.material === mat);
+            if (btn) { const oz = btn.position.z; btn.position.z = oz - 0.02; setTimeout(() => { btn.position.z = oz; }, 150); }
+        }
+
+        function createPowerSupplyPort(x, y, z, ry) {
+            const g = new THREE.Group();
+            const plateMat = new THREE.MeshStandardMaterial({ color: 0x232a30, metalness: 0.75, roughness: 0.4 });
+            const plate = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.10), plateMat);
+            g.add(plate);
+            const recess = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 20), new THREE.MeshStandardMaterial({ color: 0x05070a, metalness: 0.5, roughness: 0.6 }));
+            recess.rotation.x = Math.PI / 2; recess.position.z = 0.03; g.add(recess);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x123a55, emissive: 0x22c8ff, emissiveIntensity: 1.6, roughness: 0.3 });
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.012, 8, 24), ringMat);
+            ring.position.z = 0.055; g.add(ring);
+            // 3本のソケット端子（電撃デバイスの3電極と対になる意匠）
+            const prongMat = new THREE.MeshStandardMaterial({ color: 0x0a0d10, metalness: 0.6, roughness: 0.5 });
+            const prongPositions = [[-0.06, 0.05], [0.06, 0.05], [0, -0.06]];
+            prongPositions.forEach(([px, py]) => {
+                const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.03, 12), prongMat);
+                hole.rotation.x = Math.PI / 2; hole.position.set(px, py, 0.05); g.add(hole);
+            });
+            for (const [bx, by] of [[-0.17, 0.17], [0.17, 0.17], [-0.17, -0.17], [0.17, -0.17]]) {
+                const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.02, 8), new THREE.MeshStandardMaterial({ color: 0x40464d, metalness: 0.8, roughness: 0.3 }));
+                bolt.rotation.x = Math.PI / 2; bolt.position.set(bx, by, 0.052); g.add(bolt);
+            }
+            const light = new THREE.PointLight(0x22c8ff, 0.6, 1.6, 2);
+            light.position.z = 0.1; g.add(light);
+            // 壁から伸びる導線
+            const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 10), new THREE.MeshStandardMaterial({ color: 0x14181f, metalness: 0.6, roughness: 0.5 }));
+            conduit.rotation.x = Math.PI / 2; conduit.position.set(0, -0.24, -0.15); g.add(conduit);
+            g._fx = { ring, light, baseIntensity: 1.6 };
+            g.position.set(x, y, z); g.rotation.y = ry || 0;
+            scene.add(g);
+            powerSupplyPorts.push(g);
+            return g;
+        }
+        const powerSupplyPorts = [];
+        function updatePowerSupplyPorts(time) {
+            powerSupplyPorts.forEach(p => {
+                p._fx.ring.material.emissiveIntensity = p._fx.baseIntensity + Math.sin(time * 2.5 + p.position.x) * 0.5;
+            });
+        }
+        /* 電撃デバイスで起動された時の演出（青白く強く光る） */
+        function activatePowerSupplyPort(port) {
+            if (!port) return;
+            port._fx.ring.material.color.setHex(0x33ff88);
+            port._fx.ring.material.emissive.setHex(0x33ff88);
+            port._fx.light.color.setHex(0x33ff88);
+            port._fx.baseIntensity = 2.4;
+        }
+
+
+        /* =====================================================
+           パーティクル：実時間で噴き出す蒸気・火花・煙・埃
+           （インスタンス描画のビルボード。点サイズ上限に依存しない）
+           ===================================================== */
+        const particleSystems = [];
+        class Particles {
+            constructor(max, tex, additive) {
+                this.max = max; this.cursor = 0;
+                const f = () => new Float32Array(max);
+                this.px = f(); this.py = f(); this.pz = f();
+                this.vx = f(); this.vy = f(); this.vz = f();
+                this.life = f(); this.maxLife = f(); this.s0 = f(); this.s1 = f(); this.a0 = f();
+                this.drag = f(); this.grav = f(); this.rot = f(); this.rotV = f(); this.turb = f(); this.phase = f();
+                this.cr = f(); this.cg = f(); this.cb = f(); this.fadeIn = f(); this.fadePow = f(); this.bounce = f();
+                this.iPos = new Float32Array(max * 3); this.iSize = f(); this.iAlpha = f(); this.iRot = f(); this.iColor = new Float32Array(max * 3);
+
+                const geo = new THREE.InstancedBufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0]), 3));
+                geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
+                geo.setIndex([0, 1, 2, 0, 2, 3]);
+                const mk = (arr, n) => { const a = new THREE.InstancedBufferAttribute(arr, n); a.setUsage(THREE.DynamicDrawUsage); return a; };
+                this.aPos = mk(this.iPos, 3); this.aSize = mk(this.iSize, 1); this.aAlpha = mk(this.iAlpha, 1);
+                this.aRot = mk(this.iRot, 1); this.aColor = mk(this.iColor, 3);
+                geo.setAttribute('iPos', this.aPos); geo.setAttribute('iSize', this.aSize); geo.setAttribute('iAlpha', this.aAlpha);
+                geo.setAttribute('iRot', this.aRot); geo.setAttribute('iColor', this.aColor);
+                geo.instanceCount = max;
+
+                const mat = new THREE.ShaderMaterial({
+                    uniforms: { uMap: { value: tex }, uFogDensity: { value: 0.032 } },
+                    vertexShader: [
+                        'attribute vec3 iPos; attribute float iSize; attribute float iAlpha; attribute float iRot; attribute vec3 iColor;',
+                        'uniform float uFogDensity;',
+                        'varying vec2 vUv; varying float vAlpha; varying vec3 vColor;',
+                        'void main() {',
+                        '  vec4 mv = modelViewMatrix * vec4(iPos, 1.0);',
+                        '  float s = sin(iRot), c = cos(iRot);',
+                        '  vec2 p = vec2(c * position.x - s * position.y, s * position.x + c * position.y) * iSize;',
+                        '  mv.xy += p;',
+                        '  gl_Position = projectionMatrix * mv;',
+                        '  float d = -mv.z;',
+                        '  float fog = 1.0 - exp(-uFogDensity * uFogDensity * d * d);',
+                        '  vUv = uv; vAlpha = iAlpha * (1.0 - fog); vColor = iColor;',
+                        '}'
+                    ].join('\n'),
+                    fragmentShader: [
+                        'uniform sampler2D uMap;',
+                        'varying vec2 vUv; varying float vAlpha; varying vec3 vColor;',
+                        'void main() {',
+                        '  vec4 t = texture2D(uMap, vUv);',
+                        '  float a = t.a * vAlpha;',
+                        '  if (a < 0.003) discard;',
+                        '  gl_FragColor = vec4(vColor, a);',
+                        '}'
+                    ].join('\n'),
+                    transparent: true, depthWrite: false, depthTest: true,
+                    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending
+                });
+                this.mesh = new THREE.Mesh(geo, mat);
+                this.mesh.frustumCulled = false;
+                this.mesh.renderOrder = additive ? 20 : 10;
+                scene.add(this.mesh);
+                particleSystems.push(this);
+            }
+            emit(o) {
+                const i = this.cursor;
+                this.cursor = (this.cursor + 1) % this.max;
+                this.px[i] = o.x; this.py[i] = o.y; this.pz[i] = o.z;
+                this.vx[i] = o.vx || 0; this.vy[i] = o.vy || 0; this.vz[i] = o.vz || 0;
+                const life = o.life || 1;
+                this.life[i] = life; this.maxLife[i] = life;
+                this.s0[i] = o.s0 === undefined ? 0.3 : o.s0; this.s1[i] = o.s1 === undefined ? 1.0 : o.s1;
+                this.a0[i] = o.a === undefined ? 0.4 : o.a;
+                this.drag[i] = o.drag || 0; this.grav[i] = o.grav || 0;
+                this.rot[i] = o.rot || 0; this.rotV[i] = o.rotV || 0;
+                this.turb[i] = o.turb || 0; this.phase[i] = Math.random() * 20;
+                this.cr[i] = o.r === undefined ? 1 : o.r; this.cg[i] = o.g === undefined ? 1 : o.g; this.cb[i] = o.b === undefined ? 1 : o.b;
+                this.fadeIn[i] = o.fadeIn || 0.12; this.fadePow[i] = o.fadePow === undefined ? 1.0 : o.fadePow;
+                this.bounce[i] = o.bounce || 0;
+            }
+            update(dt, time) {
+                const n = this.max;
+                for (let i = 0; i < n; i++) {
+                    if (this.life[i] <= 0) continue;
+                    this.life[i] -= dt;
+                    if (this.life[i] <= 0) { this.iAlpha[i] = 0; this.iSize[i] = 0; continue; }
+                    const t = 1 - this.life[i] / this.maxLife[i];
+                    const df = Math.exp(-this.drag[i] * dt);
+                    this.vx[i] *= df; this.vy[i] *= df; this.vz[i] *= df;
+                    this.vy[i] += this.grav[i] * dt;
+                    if (this.turb[i] > 0) {
+                        const ph = this.phase[i] + time * 2.3;
+                        this.vx[i] += Math.sin(ph * 1.7) * this.turb[i] * dt;
+                        this.vy[i] += Math.cos(ph * 1.3) * this.turb[i] * 0.5 * dt;
+                        this.vz[i] += Math.sin(ph * 2.1 + 1.3) * this.turb[i] * dt;
+                    }
+                    this.px[i] += this.vx[i] * dt; this.py[i] += this.vy[i] * dt; this.pz[i] += this.vz[i] * dt;
+                    if (this.bounce[i] > 0 && this.py[i] < 0.03) { this.py[i] = 0.03; this.vy[i] = Math.abs(this.vy[i]) * this.bounce[i]; this.vx[i] *= 0.7; this.vz[i] *= 0.7; }
+                    this.rot[i] += this.rotV[i] * dt;
+                    const k = i * 3;
+                    this.iPos[k] = this.px[i]; this.iPos[k + 1] = this.py[i]; this.iPos[k + 2] = this.pz[i];
+                    this.iSize[i] = this.s0[i] + (this.s1[i] - this.s0[i]) * Math.pow(t, 0.6);
+                    this.iAlpha[i] = this.a0[i] * Math.min(1, t / this.fadeIn[i]) * Math.pow(1 - t, this.fadePow[i]);
+                    this.iRot[i] = this.rot[i];
+                    this.iColor[k] = this.cr[i]; this.iColor[k + 1] = this.cg[i]; this.iColor[k + 2] = this.cb[i];
+                }
+                this.aPos.needsUpdate = true; this.aSize.needsUpdate = true; this.aAlpha.needsUpdate = true;
+                this.aRot.needsUpdate = true; this.aColor.needsUpdate = true;
+            }
+        }
+        const fxSmoke = new Particles(2600, TEX.sprite.puff, false);     // 蒸気・煙・粉塵
+        const fxSpark = new Particles(1000, TEX.sprite.glow, true);      // 火花・放電の飛沫
+        const fxDust = new Particles(240, TEX.sprite.dust, false);       // 漂う埃
+        const fxSlimeFX = new Particles(300, TEX.sprite.glow, true);     // スライムの胞子・泡
+
+        function sparkBurst(x, y, z, n, speed, col, up) {
+            col = col || [1.0, 0.62, 0.22];
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * 6.283, e = (Math.random() - 0.3) * 1.6, sp = speed * (0.3 + Math.random() * 0.9);
+                fxSpark.emit({
+                    x, y, z, vx: Math.cos(a) * Math.cos(e) * sp, vy: Math.sin(e) * sp + (up || 1.5), vz: Math.sin(a) * Math.cos(e) * sp,
+                    life: rrand(0.35, 1.2), s0: rrand(0.06, 0.16), s1: 0.02, a: 1.0, drag: 0.5, grav: -9.5,
+                    r: col[0], g: col[1] * (0.7 + Math.random() * 0.3), b: col[2], fadeIn: 0.02, fadePow: 0.7, bounce: 0.4
+                });
+            }
+        }
+        function smokeBurst(x, y, z, n, size, speed, tint, life) {
+            tint = tint || [0.55, 0.57, 0.6];
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * 6.283, sp = speed * Math.random();
+                fxSmoke.emit({
+                    x: x + (Math.random() - 0.5) * 0.3, y: y + (Math.random() - 0.5) * 0.3, z: z + (Math.random() - 0.5) * 0.3,
+                    vx: Math.cos(a) * sp, vy: Math.random() * speed * 0.8, vz: Math.sin(a) * sp,
+                    life: (life || 2.4) * rrand(0.7, 1.3), s0: size * 0.5, s1: size * rrand(1.6, 2.6), a: 0.45, drag: 1.2, grav: 0.35,
+                    rot: Math.random() * 6.28, rotV: rrand(-0.5, 0.5), turb: 1.2, r: tint[0], g: tint[1], b: tint[2]
+                });
+            }
+        }
+        let dustSpawnAcc = 0;
+        function updateAmbientDust(dt) {
+            dustSpawnAcc += dt * 22;
+            while (dustSpawnAcc >= 1) {
+                dustSpawnAcc -= 1;
+                fxDust.emit({
+                    x: player.pos.x + rrand(-6, 6), y: rrand(0.2, 4.5), z: player.pos.z + rrand(-12, 10),
+                    vx: rrand(-0.05, 0.05), vy: rrand(-0.03, 0.06), vz: rrand(-0.05, 0.05),
+                    life: rrand(7, 13), s0: rrand(0.025, 0.06), s1: rrand(0.025, 0.06), a: rrand(0.25, 0.6), turb: 0.15,
+                    r: 0.75, g: 0.82, b: 0.9, fadeIn: 0.2, fadePow: 0.6
+                });
+            }
+        }
+
+        /* =====================================================
+           プレイヤー所持デバイス（電撃デバイス）：常時放電＋発射時の大放電
+           ===================================================== */
+        const deviceGroup = new THREE.Group();
+        const dMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 });
+        const dDark = new THREE.MeshStandardMaterial({ color: 0x0a0f16, metalness: 0.9, roughness: 0.35 });
+        const dCoil = new THREE.MeshStandardMaterial({ color: 0x0b1420, emissive: 0x00c8ff, emissiveIntensity: 1.3, roughness: 0.3 });
+        const dTipMat = new THREE.MeshBasicMaterial({ color: 0xd8fbff });
+        const dLedMat = new THREE.MeshStandardMaterial({ color: 0x113322, emissive: 0x22ff88, emissiveIntensity: 1.5 });
+
+        const device_tips = [
+            { x: -0.055, y: 0.105, z: -0.47, bx: -0.02, by: 0.07 },
+            { x: 0.055, y: 0.105, z: -0.47, bx: 0.02, by: 0.07 },
+            { x: 0.0, y: -0.005, z: -0.48, bx: 0.0, by: 0.03 }
+        ];
+        const device_leds = [];
+
+        function makeRod(a, b, r, mat) {
+            const len = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2);
+            const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), mat);
+            m.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+            const dir = new THREE.Vector3(b.x - a.x, b.y - a.y, b.z - a.z).normalize();
+            m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+            return m;
+        }
+
+        (function buildDevice() {
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.30, 16), dMetal);
+            barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.05, -0.15); deviceGroup.add(barrel);
+            [-0.06, -0.12, -0.18, -0.24].forEach(z => {
+                const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.057, 0.057, 0.016, 16), dCoil);
+                ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.05, z); deviceGroup.add(ring);
+            });
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 0.16, 10), dDark);
+            grip.position.set(0, -0.03, -0.04); grip.rotation.x = 0.35; deviceGroup.add(grip);
+            const pack = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.07, 0.10), dDark);
+            pack.position.set(0, 0.03, 0.03); deviceGroup.add(pack);
+            const head = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.06, 14), dMetal);
+            head.rotation.x = Math.PI / 2; head.position.set(0, 0.05, -0.33); deviceGroup.add(head);
+            // 放電端子（3本の電極）
+            device_tips.forEach(t => {
+                deviceGroup.add(makeRod({ x: t.bx, y: t.by, z: -0.35 }, { x: t.x, y: t.y, z: t.z }, 0.006, dMetal));
+                const tip = new THREE.Mesh(new THREE.SphereGeometry(0.013, 10, 8), dTipMat);
+                tip.position.set(t.x, t.y, t.z); deviceGroup.add(tip);
+            });
+            // チャージ表示LED
+            for (let i = 0; i < 5; i++) {
+                const led = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.008, 0.022), dLedMat.clone());
+                led.position.set(0.05, 0.075, -0.05 - i * 0.05);
+                deviceGroup.add(led); device_leds.push(led);
+            }
+        })();
+        deviceGroup.position.set(0.28, -0.22, -0.45);
+        camera.add(deviceGroup);
+
+        const deviceLight = new THREE.PointLight(0x66eeff, 0.8, 3.5, 2);
+        deviceLight.position.set(0.28, -0.12, -0.9);
+        camera.add(deviceLight);
+
+        /* 先端のグロー */
+        const deviceGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.sprite.glow, color: 0x66ddff, transparent: true, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false }));
+        deviceGlow.position.set(0, 0.06, -0.47);
+        deviceGlow.scale.set(0.2, 0.2, 1);
+        deviceGlow.renderOrder = 998;
+        deviceGroup.add(deviceGlow);
+
+        /* 雷（カメラ空間のリボン）：太さを出すためビルボード状の帯で描画 */
+        class Ribbon {
+            constructor(segs, color) {
+                this.segs = segs;
+                const n = (segs + 1) * 2;
+                this.pos = new Float32Array(n * 3);
+                const idx = [];
+                for (let i = 0; i < segs; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+                const geo = new THREE.BufferGeometry();
+                this.attr = new THREE.BufferAttribute(this.pos, 3);
+                this.attr.setUsage(THREE.DynamicDrawUsage);
+                geo.setAttribute('position', this.attr);
+                geo.setIndex(idx);
+                this.mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, side: THREE.DoubleSide });
+                this.mesh = new THREE.Mesh(geo, this.mat);
+                this.mesh.frustumCulled = false;
+                this.mesh.renderOrder = 999;
+                this.mesh.visible = false;
+                camera.add(this.mesh);
+            }
+            setPath(pts, width) {
+                const n = pts.length;
+                for (let i = 0; i < n; i++) {
+                    const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+                    const tx = b.x - a.x, ty = b.y - a.y, tz = b.z - a.z;
+                    let px = ty * p.z - tz * p.y, py = tz * p.x - tx * p.z, pz = tx * p.y - ty * p.x;
+                    const l = Math.sqrt(px * px + py * py + pz * pz) || 1;
+                    const w = width * (0.35 + 0.65 * Math.sin(Math.PI * i / (n - 1))) * 0.5 / l;
+                    px *= w; py *= w; pz *= w;
+                    const k = i * 6;
+                    this.pos[k] = p.x + px; this.pos[k + 1] = p.y + py; this.pos[k + 2] = p.z + pz;
+                    this.pos[k + 3] = p.x - px; this.pos[k + 4] = p.y - py; this.pos[k + 5] = p.z - pz;
+                }
+                this.attr.needsUpdate = true;
+            }
+        }
+        function jaggedPath(a, b, segs, amp) {
+            const pts = [];
+            for (let i = 0; i <= segs; i++) {
+                const t = i / segs, env = Math.sin(Math.PI * t);
+                pts.push({
+                    x: a.x + (b.x - a.x) * t + (Math.random() - 0.5) * amp * env,
+                    y: a.y + (b.y - a.y) * t + (Math.random() - 0.5) * amp * env,
+                    z: a.z + (b.z - a.z) * t + (Math.random() - 0.5) * amp * env * 0.4
+                });
+            }
+            return pts;
+        }
+        const devArcs = [new Ribbon(7, 0xaef6ff), new Ribbon(7, 0x7ad8ff), new Ribbon(7, 0xd8fbff), new Ribbon(6, 0x7ad8ff)];
+        const boltRibbons = [];
+        for (let i = 0; i < 7; i++) boltRibbons.push(new Ribbon(i < 3 ? 16 : 8, i % 2 ? 0xb8f4ff : 0x74dcff));
+        const dischargeFX = { t: 0, dur: 0.24, active: false, end: { x: 0, y: 0, z: -8 }, regen: 0 };
+        let arcTimer = 0;
+
+        function devTipCam(i) {   // 端子先端のカメラ空間座標
+            const t = device_tips[i];
+            return { x: deviceGroup.position.x + t.x, y: deviceGroup.position.y + t.y, z: deviceGroup.position.z + t.z };
+        }
+
+        function triggerDischargeFX() {
+            // 狙いの距離：正面に1977がいればそこまで、なければ約9m
+            let L = 9;
+            if (typeof boss1977 !== 'undefined' && boss1977 && boss1977.visible) {
+                const to = boss1977.position.clone(); to.y += 3.2;
+                const local = camera.worldToLocal(to);
+                if (local.z < -1 && Math.abs(local.x) < Math.abs(local.z) * 0.5 && Math.abs(local.y) < Math.abs(local.z) * 0.9) L = Math.min(22, -local.z);
+            }
+            dischargeFX.end = { x: 0, y: 0, z: -L };
+            dischargeFX.t = 0; dischargeFX.active = true; dischargeFX.regen = 0;
+            deviceLight.intensity = 5;
+            const wp = camera.localToWorld(new THREE.Vector3(0, 0, -L));
+            sparkBurst(wp.x, wp.y, wp.z, 60, 7, [0.6, 0.92, 1.0], 2);
+            smokeBurst(wp.x, wp.y, wp.z, 5, 0.6, 1.0, [0.7, 0.85, 0.95], 1.2);
+        }
+
+        function updateDeviceFX(dt, time) {
+            const show = deviceGroup.visible;
+            const charge = state.charge / 100;
+            // チャージLED
+            device_leds.forEach((led, i) => {
+                const on = charge * 5 > i;
+                led.material.emissiveIntensity = on ? 1.5 + Math.sin(time * 6 + i) * 0.3 : 0.05;
+            });
+            // 常時放電：端子間に短いアークが明滅
+            arcTimer -= dt;
+            if (arcTimer <= 0) {
+                arcTimer = 0.035 + Math.random() * 0.04;
+                const pairs = [[0, 1], [1, 2], [0, 2], [0, 0]];
+                devArcs.forEach((r, i) => {
+                    const on = show && Math.random() < 0.35 + charge * 0.6;
+                    r.mesh.visible = on;
+                    if (!on) return;
+                    const pr = pairs[i];
+                    let a = devTipCam(pr[0]), b = devTipCam(pr[1]);
+                    if (pr[0] === pr[1]) {   // 端子から前方へ伸びる暴れアーク
+                        b = { x: a.x + (Math.random() - 0.5) * 0.28, y: a.y + (Math.random() - 0.3) * 0.22, z: a.z - 0.08 - Math.random() * 0.22 };
+                    }
+                    r.setPath(jaggedPath(a, b, 7, 0.05 + Math.random() * 0.05), 0.010 + Math.random() * 0.010);
+                    r.mat.opacity = 0.55 + Math.random() * 0.45;
+                });
+            }
+            deviceGlow.visible = show;
+            deviceGlow.material.opacity = 0.45 + charge * 0.4 + (Math.random() - 0.5) * 0.25;
+            const gs = 0.16 + charge * 0.12 + Math.random() * 0.05;
+            deviceGlow.scale.set(gs, gs, 1);
+            deviceLight.intensity += ((show ? 0.7 + charge * 0.9 + Math.random() * 0.6 : 0) - deviceLight.intensity) * Math.min(1, 14 * dt);
+            deviceCoilPulse(time, charge);
+
+            // 発射時の大放電
+            if (dischargeFX.active) {
+                dischargeFX.t += dt;
+                const k = dischargeFX.t / dischargeFX.dur;
+                if (k >= 1) {
+                    dischargeFX.active = false;
+                    boltRibbons.forEach(r => r.mesh.visible = false);
+                } else {
+                    dischargeFX.regen -= dt;
+                    if (dischargeFX.regen <= 0) {
+                        dischargeFX.regen = 0.028;
+                        const s = devTipCam(2); s.y += 0.06;
+                        const e = dischargeFX.end, L = -e.z;
+                        for (let i = 0; i < 3; i++) {
+                            const r = boltRibbons[i];
+                            r.mesh.visible = true;
+                            const off = { x: e.x + (Math.random() - 0.5) * 0.5, y: e.y + (Math.random() - 0.5) * 0.4, z: e.z };
+                            r.setPath(jaggedPath(s, off, 16, 0.10 + L * 0.05), (0.035 + L * 0.006) * (i === 0 ? 1.4 : 0.8));
+                        }
+                        for (let i = 3; i < boltRibbons.length; i++) {   // 枝分かれ
+                            const r = boltRibbons[i];
+                            r.mesh.visible = true;
+                            const tt = 0.25 + Math.random() * 0.6;
+                            const a = { x: s.x + (e.x - s.x) * tt + (Math.random() - 0.5) * 0.3, y: s.y + (e.y - s.y) * tt + (Math.random() - 0.5) * 0.3, z: s.z + (e.z - s.z) * tt };
+                            const b = { x: a.x + (Math.random() - 0.5) * 2.6, y: a.y + (Math.random() - 0.5) * 1.6, z: a.z - Math.random() * L * 0.25 };
+                            r.setPath(jaggedPath(a, b, 8, 0.25), 0.02 + L * 0.003);
+                        }
+                    }
+                    boltRibbons.forEach(r => r.mat.opacity = Math.pow(1 - k, 0.6));
+                    deviceLight.intensity = Math.max(deviceLight.intensity, 4 * (1 - k));
+                }
+            }
+        }
+        function deviceCoilPulse(time, charge) {
+            dCoil.emissiveIntensity = 0.9 + charge * 1.6 + Math.sin(time * 18) * 0.35 + (Math.random() < 0.15 ? 0.8 : 0);
+        }
+
+        /* =====================================================
+           標準ABR（1977以外）：もっとロボットらしい機械的デザイン
+           露出した関節・油圧シリンダー・配線・パネルライン・簡易歩行
+           ===================================================== */
+        function createStandardABR(colorHex) {
+            const group = new THREE.Group();
+            const armor = new THREE.MeshStandardMaterial({ color: 0x181c22, metalness: 0.85, roughness: 0.32 });
+            const armor2 = new THREE.MeshStandardMaterial({ color: 0x20262e, metalness: 0.8, roughness: 0.38 });
+            const joint = new THREE.MeshStandardMaterial({ color: 0x0c0e12, metalness: 0.9, roughness: 0.28 });
+            const hydraulic = new THREE.MeshStandardMaterial({ color: 0x3a4048, metalness: 0.95, roughness: 0.15 });
+            const sensor = new THREE.MeshStandardMaterial({ color: colorHex, emissive: colorHex, emissiveIntensity: 2.4 });
+            const cyl = (r1, r2, h, seg) => new THREE.CylinderGeometry(r1, r2, h, seg || 8);
+            const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+            const M = (g, mat) => new THREE.Mesh(g, mat);
+            const parts = { glow: [] };
+
+            // 胴体：中央コア＋露出フレーム
+            const torsoCore = M(box(0.36, 0.55, 0.22), joint); torsoCore.position.y = 0.92; group.add(torsoCore);
+            const torsoFrameF = M(box(0.5, 0.68, 0.06), armor); torsoFrameF.position.set(0, 0.9, 0.13); group.add(torsoFrameF);
+            const torsoFrameB = M(box(0.5, 0.68, 0.06), armor2); torsoFrameB.position.set(0, 0.9, -0.13); group.add(torsoFrameB);
+            for (const sx of [-0.24, 0.24]) { const rail = M(box(0.05, 0.62, 0.28), joint); rail.position.set(sx, 0.9, 0); group.add(rail); }
+            const chestCore = M(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 16), sensor); chestCore.rotation.x = Math.PI / 2; chestCore.position.set(0, 0.98, 0.175); group.add(chestCore); parts.glow.push(chestCore);
+            for (let i = -1; i <= 1; i++) { const vent = M(box(0.05, 0.3, 0.03), joint); vent.position.set(i * 0.13, 0.78, -0.17); group.add(vent); }
+
+            // 頭部：カメラアイ2つ＋首の油圧
+            const neckPiston = M(cyl(0.035, 0.035, 0.16, 8), hydraulic); neckPiston.position.set(0, 1.28, 0); group.add(neckPiston);
+            const head = M(box(0.24, 0.2, 0.22), armor); head.position.y = 1.42; group.add(head);
+            const visorBrow = M(box(0.26, 0.04, 0.06), joint); visorBrow.position.set(0, 1.49, -0.13); group.add(visorBrow);
+            for (const sx of [-0.07, 0.07]) {
+                const eye = M(new THREE.CylinderGeometry(0.028, 0.028, 0.05, 12), sensor);
+                eye.rotation.x = Math.PI / 2; eye.position.set(sx, 1.42, -0.14); group.add(eye); parts.glow.push(eye);
+            }
+            const antenna = M(cyl(0.008, 0.004, 0.14, 5), joint); antenna.position.set(0.1, 1.58, 0); antenna.rotation.z = -0.25; group.add(antenna);
+
+            // 肩：露出ボールジョイント＋油圧シリンダー
+            const armGroups = {};
+            for (const side of [-1, 1]) {
+                const shoulder = M(new THREE.SphereGeometry(0.09, 12, 10), joint);
+                shoulder.position.set(side * 0.32, 1.12, 0); group.add(shoulder);
+                const shoulderArmor = M(box(0.16, 0.14, 0.16), armor2); shoulderArmor.position.set(side * 0.34, 1.16, 0); group.add(shoulderArmor);
+
+                const upperArmGroup = new THREE.Group(); upperArmGroup.position.set(side * 0.32, 1.05, 0); group.add(upperArmGroup);
+                const upperArm = M(cyl(0.055, 0.048, 0.34, 8), armor); upperArm.position.y = -0.17; upperArmGroup.add(upperArm);
+                const piston = M(cyl(0.018, 0.018, 0.28, 6), hydraulic); piston.position.set(side * 0.045, -0.16, 0.05); upperArmGroup.add(piston);
+
+                const elbowGroup = new THREE.Group(); elbowGroup.position.y = -0.34; upperArmGroup.add(elbowGroup);
+                const elbowJoint = M(new THREE.SphereGeometry(0.05, 10, 8), joint); elbowGroup.add(elbowJoint);
+                const foreArmGroup = new THREE.Group(); elbowGroup.add(foreArmGroup);
+                const foreArm = M(cyl(0.045, 0.04, 0.30, 8), armor2); foreArm.position.y = -0.15; foreArmGroup.add(foreArm);
+                for (let i = 0; i < 3; i++) { const wire = M(cyl(0.006, 0.006, 0.26, 5), joint); wire.position.set((i - 1) * 0.02, -0.15, 0.035); foreArmGroup.add(wire); }
+                const hand = M(box(0.08, 0.11, 0.06), joint); hand.position.y = -0.33; foreArmGroup.add(hand);
+
+                armGroups[side] = { upperArmGroup, elbowGroup, foreArmGroup };
+            }
+
+            // 脚：露出フレーム＋膝の油圧＋足首
+            const legGroups = {};
+            for (const side of [-1, 1]) {
+                const hip = new THREE.Group(); hip.position.set(side * 0.15, 0.58, 0); group.add(hip);
+                const hipBlock = M(box(0.16, 0.12, 0.16), joint); hip.add(hipBlock);
+                const thighGroup = new THREE.Group(); hip.add(thighGroup);
+                const thigh = M(cyl(0.075, 0.06, 0.34, 8), armor); thigh.position.y = -0.17; thighGroup.add(thigh);
+                const thighFrame = M(box(0.03, 0.30, 0.05), joint); thighFrame.position.set(side * 0.055, -0.17, 0.05); thighGroup.add(thighFrame);
+                const kneeGroup = new THREE.Group(); kneeGroup.position.y = -0.34; thighGroup.add(kneeGroup);
+                const kneeCap = M(new THREE.SphereGeometry(0.055, 10, 8), joint); kneeGroup.add(kneeCap);
+                const shinGroup = new THREE.Group(); kneeGroup.add(shinGroup);
+                const shin = M(cyl(0.06, 0.045, 0.32, 8), armor2); shin.position.y = -0.16; shinGroup.add(shin);
+                const shinPiston = M(cyl(0.016, 0.016, 0.26, 6), hydraulic); shinPiston.position.set(-side * 0.04, -0.16, 0.04); shinGroup.add(shinPiston);
+                const ankle = M(new THREE.SphereGeometry(0.04, 8, 6), joint); ankle.position.y = -0.32; shinGroup.add(ankle);
+                const foot = M(box(0.11, 0.06, 0.20), joint); foot.position.set(0, -0.36, -0.04); shinGroup.add(foot);
+                legGroups[side] = { thighGroup, kneeGroup, shinGroup };
+            }
+
+            // 背面：放熱フィン＋バックパック配線
+            const pack = M(box(0.34, 0.34, 0.10), armor2); pack.position.set(0, 0.98, -0.20); group.add(pack);
+            for (let i = -1; i <= 1; i++) { const fin = M(box(0.03, 0.28, 0.09), joint); fin.position.set(i * 0.10, 0.98, -0.255); group.add(fin); }
+            for (let i = 0; i < 3; i++) {
+                const wire = M(cyl(0.008, 0.008, 0.5, 5), i % 2 ? MAT.cableRed : MAT.cableBlack);
+                wire.position.set((i - 1) * 0.06, 0.72, -0.19); wire.rotation.z = (i - 1) * 0.15; group.add(wire);
+            }
+            const shoulderLightL = M(box(0.03, 0.05, 0.03), sensor); shoulderLightL.position.set(-0.34, 1.20, -0.08); group.add(shoulderLightL); parts.glow.push(shoulderLightL);
+            const shoulderLightR = shoulderLightL.clone(); shoulderLightR.position.x = 0.34; group.add(shoulderLightR); parts.glow.push(shoulderLightR);
+
+            group.userData.glowParts = parts.glow;
+            group.visorMesh = chestCore;
+            group.eyeParts = parts.glow;
+            group.armGroups = armGroups; group.legGroups = legGroups;
+            group.walkPhase = Math.random() * 10;
+            return group;
+        }
+
+        /* 標準ABRの簡易歩行モーション（毎フレーム呼ぶ） */
+        function animateStandardABR(g, dt, moving, speed) {
+            g.walkPhase += dt * (speed || 3.0) * (moving ? 1 : 0.15);
+            const swing = moving ? Math.sin(g.walkPhase) * 0.55 : Math.sin(g.walkPhase) * 0.04;
+            const bendL = moving ? Math.max(0, Math.sin(g.walkPhase)) * 0.9 : 0;
+            const bendR = moving ? Math.max(0, Math.sin(g.walkPhase + Math.PI)) * 0.9 : 0;
+            if (g.legGroups) {
+                g.legGroups[-1].thighGroup.rotation.x = swing;
+                g.legGroups[1].thighGroup.rotation.x = -swing;
+                g.legGroups[-1].kneeGroup.rotation.x = bendL;
+                g.legGroups[1].kneeGroup.rotation.x = bendR;
+            }
+            if (g.armGroups) {
+                g.armGroups[-1].upperArmGroup.rotation.x = -swing * 0.6;
+                g.armGroups[1].upperArmGroup.rotation.x = swing * 0.6;
+            }
+            if (g.eyeParts) g.eyeParts.forEach(p => { if (p.material) p.material.emissiveIntensity = 2.0 + Math.sin(performance.now() * 0.006 + g.walkPhase) * 0.6; });
+        }
+
+        /* 1977王機モデル生成 */
+        const armorMat = new THREE.MeshStandardMaterial({ color:0x12151b, metalness:0.95, roughness:0.25 });
+        const extraArmorMat = new THREE.MeshStandardMaterial({ color:0x1e2430, metalness:0.85, roughness:0.4 });
+        const jointMat = new THREE.MeshStandardMaterial({ color:0x282f3a, metalness:0.9, roughness:0.3 });
+        const sensorMat = new THREE.MeshStandardMaterial({ color:0xff0033, emissive:0xff0033, emissiveIntensity:5 });
+
+        function createRollerTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1e2430'; ctx.fillRect(0, 0, 512, 512);
+            ctx.fillStyle = '#ff0033';
+            for(let i=0; i<512; i+=64) ctx.fillRect(i, 0, 32, 512);
+            ctx.fillStyle = '#0a0c0e';
+            for(let j=0; j<512; j+=32) ctx.fillRect(0, j, 512, 8);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+        const rollerMat = new THREE.MeshStandardMaterial({ map: createRollerTexture(), metalness: 0.8, roughness: 0.3 });
+
+        function createMarkingTexture(mainText, subText) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#12151b'; ctx.fillRect(0, 0, 512, 256);
+            ctx.strokeStyle = '#ff0033'; ctx.lineWidth = 12; ctx.strokeRect(15, 15, 482, 226);
+            ctx.fillStyle = '#d6a100';
+            for(let i=0; i<512; i+=40){
+                ctx.beginPath(); ctx.moveTo(i, 15); ctx.lineTo(i+20, 15); ctx.lineTo(i-10, 40); ctx.lineTo(i-30, 40); ctx.fill();
+            }
+            ctx.fillStyle = '#f0f3f8'; ctx.font = 'black 52px monospace'; ctx.textAlign = 'center'; ctx.fillText(mainText, 256, 125);
+            if(subText){ ctx.fillStyle = '#ff0033'; ctx.font = 'bold 28px monospace'; ctx.fillText(subText, 256, 185); }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const chestMarkingMat = new THREE.MeshStandardMaterial({ map: createMarkingTexture("UNIT-1977", "TOTAL EFFICIENCY"), metalness: 0.85, roughness: 0.3 });
+        const shoulderMarkingMat = new THREE.MeshStandardMaterial({ map: createMarkingTexture("SYS-1977", "SOVEREIGN CONTROL"), metalness: 0.85, roughness: 0.3 });
+
+        let refs = {};
+
+        function create1977King() {
+            const g = new THREE.Group();
+            const torsoY = 9.5;
+
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(3.8, 4.0, 2.6), armorMat);
+            torso.position.y = torsoY; g.add(torso);
+
+            const chestArmor = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 0.2), chestMarkingMat);
+            chestArmor.position.set(0, torsoY + 0.3, 1.4); g.add(chestArmor);
+
+            const core = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.6, 24), sensorMat);
+            core.rotation.x = Math.PI/2; core.position.set(0, torsoY + 0.3, 1.6); g.add(core);
+
+            const head = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.6, 2.0), armorMat);
+            head.position.y = torsoY + 3.5; g.add(head);
+
+            const eyeOffsets = [[-0.45, 0.8], [0.45, 0.8], [-0.45, -0.4], [0.45, -0.4]];
+            eyeOffsets.forEach(offset => {
+                const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.4, 16), sensorMat);
+                eye.rotation.x = Math.PI/2;
+                eye.position.set(offset[0], torsoY + 3.5 + offset[1], 1.05);
+                g.add(eye);
+            });
+
+            const mainGenerator = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.6, 1.6), jointMat);
+            mainGenerator.position.set(0, torsoY + 0.2, -1.8); g.add(mainGenerator);
+
+            const shoulderExtendL = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 1.4), jointMat);
+            shoulderExtendL.position.set(-2.8, torsoY + 1.2, 0); g.add(shoulderExtendL);
+
+            const shoulderExtendR = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 1.4), jointMat);
+            shoulderExtendR.position.set(2.8, torsoY + 1.2, 0); g.add(shoulderExtendR);
+
+            /* 左腕 */
+            const leftArmGroup = new THREE.Group();
+            leftArmGroup.position.set(-3.8, torsoY + 1.2, 0);
+
+            const shoulderArmorL = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.6, 0.2), shoulderMarkingMat);
+            shoulderArmorL.position.set(-0.4, 0.8, 1.1); leftArmGroup.add(shoulderArmorL);
+
+            const leftUpperGroup = new THREE.Group();
+            const upperLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 5.2, 12), armorMat);
+            upperLeft.position.y = -2.6; leftUpperGroup.add(upperLeft);
+
+            const leftElbowGroup = new THREE.Group();
+            leftElbowGroup.position.y = -5.2;
+
+            const leftLowerGroup = new THREE.Group();
+            const lowerLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.24, 5.0, 12), armorMat);
+            lowerLeft.position.y = -2.5; leftLowerGroup.add(lowerLeft);
+
+            const gripBase = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 1.5), jointMat);
+            gripBase.position.y = -5.0; leftLowerGroup.add(gripBase);
+
+            refs.fingers = [];
+            for(let i=0; i<3; i++){
+                const angle = (i * Math.PI * 2) / 3;
+                const fingerGroup = new THREE.Group();
+                fingerGroup.position.set(Math.cos(angle)*0.55, -5.2, Math.sin(angle)*0.55);
+                
+                const finger = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2.4, 0.28), jointMat);
+                finger.position.y = -1.0; fingerGroup.add(finger);
+                
+                leftLowerGroup.add(fingerGroup);
+                refs.fingers.push(fingerGroup);
+            }
+
+            leftElbowGroup.add(leftLowerGroup);
+            leftUpperGroup.add(leftElbowGroup);
+            leftArmGroup.add(leftUpperGroup);
+            g.add(leftArmGroup);
+
+            refs.leftArmGroup = leftArmGroup;
+            refs.leftUpperGroup = leftUpperGroup;
+            refs.leftElbowGroup = leftElbowGroup;
+            refs.leftLowerGroup = leftLowerGroup;
+
+            /* 右腕 */
+            const rightArmGroup = new THREE.Group();
+            rightArmGroup.position.set(3.8, torsoY + 1.2, 0);
+
+            const shoulderArmorR = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.6, 0.2), shoulderMarkingMat);
+            shoulderArmorR.position.set(0.4, 0.8, 1.1); rightArmGroup.add(shoulderArmorR);
+
+            const rightUpperGroup = new THREE.Group();
+            const upperRight = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 5.2, 12), armorMat);
+            upperRight.position.y = -2.6; rightUpperGroup.add(upperRight);
+
+            const rightElbowGroup = new THREE.Group();
+            rightElbowGroup.position.y = -5.2;
+
+            const rightLowerGroup = new THREE.Group();
+            const lowerRight = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.24, 5.0, 12), armorMat);
+            lowerRight.position.y = -2.5; rightLowerGroup.add(lowerRight);
+
+            const drillGroup = new THREE.Group();
+            drillGroup.position.y = -5.2;
+
+            const drillSocket = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.0, 1.2, 16), jointMat);
+            drillGroup.add(drillSocket);
+
+            const stage1 = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.1, 1.4, 12), jointMat);
+            stage1.position.y = -1.1; drillGroup.add(stage1);
+
+            const stage2 = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.4, 16), jointMat);
+            stage2.position.y = -2.8; stage2.rotation.x = Math.PI; drillGroup.add(stage2);
+
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.6, 16), sensorMat);
+            tip.position.y = -4.1; tip.rotation.x = Math.PI; drillGroup.add(tip);
+
+            rightLowerGroup.add(drillGroup);
+            rightElbowGroup.add(rightLowerGroup);
+            rightUpperGroup.add(rightElbowGroup);
+            rightArmGroup.add(rightUpperGroup);
+            g.add(rightArmGroup);
+
+            refs.rightArmGroup = rightArmGroup;
+            refs.rightUpperGroup = rightUpperGroup;
+            refs.rightElbowGroup = rightElbowGroup;
+            refs.rightLowerGroup = rightLowerGroup;
+            refs.drillGroup = drillGroup;
+
+            /* 脚部＆ローラー */
+            const hipL = new THREE.Group(); hipL.position.set(-1.6, torsoY - 2.0, 0); g.add(hipL);
+            const thighLGroup = new THREE.Group();
+            const thighL = new THREE.Mesh(new THREE.BoxGeometry(1.3, 4.8, 1.3), armorMat);
+            thighL.position.y = -2.4; thighLGroup.add(thighL);
+            const kneeGroupL = new THREE.Group(); kneeGroupL.position.y = -4.8;
+            const shinGroupL = new THREE.Group();
+            const shinL = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.0, 1.2), armorMat);
+            shinL.position.y = -2.5; shinGroupL.add(shinL);
+            kneeGroupL.add(shinGroupL); thighLGroup.add(kneeGroupL); hipL.add(thighLGroup);
+
+            const hipR = new THREE.Group(); hipR.position.set(1.6, torsoY - 2.0, 0); g.add(hipR);
+            const thighRGroup = new THREE.Group();
+            const thighR = new THREE.Mesh(new THREE.BoxGeometry(1.3, 4.8, 1.3), armorMat);
+            thighR.position.y = -2.4; thighRGroup.add(thighR);
+            const kneeGroupR = new THREE.Group(); kneeGroupR.position.y = -4.8;
+            const shinGroupR = new THREE.Group();
+            const shinR = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.0, 1.2), armorMat);
+            shinR.position.y = -2.5; shinGroupR.add(shinR);
+            kneeGroupR.add(shinGroupR); thighRGroup.add(kneeGroupR); hipR.add(thighRGroup);
+
+            refs.hipL = hipL; refs.thighLGroup = thighLGroup; refs.kneeGroupL = kneeGroupL; refs.shinGroupL = shinGroupL;
+            refs.hipR = hipR; refs.thighRGroup = thighRGroup; refs.kneeGroupR = kneeGroupR; refs.shinGroupR = shinGroupR;
+
+            const rollerArmGroup = new THREE.Group();
+            rollerArmGroup.position.set(0, torsoY - 2.0, -0.6);
+
+            const rollArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4.5, 12), jointMat);
+            rollArmL.position.set(-1.0, -2.2, 0); rollArmL.rotation.x = 0.4; rollerArmGroup.add(rollArmL);
+
+            const rollArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4.5, 12), jointMat);
+            rollArmR.position.set(1.0, -2.2, 0); rollArmR.rotation.x = 0.4; rollerArmGroup.add(rollArmR);
+
+            const roller = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5.4, 32), rollerMat);
+            roller.rotation.z = Math.PI/2;
+            roller.position.set(0, -4.2, 0.6);
+
+            for(let r=0; r<8; r++){
+                const angle = (r * Math.PI * 2) / 8;
+                const tread = new THREE.Mesh(new THREE.BoxGeometry(0.18, 5.45, 0.35), extraArmorMat);
+                tread.position.set(Math.cos(angle)*1.5, 0, Math.sin(angle)*1.5);
+                tread.rotation.y = -angle; roller.add(tread);
+            }
+
+            for(let side=-1; side<=1; side+=2){
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.2, 16), sensorMat);
+                cap.position.set(0, side*2.75, 0); roller.add(cap);
+            }
+
+            rollerArmGroup.add(roller);
+            g.add(rollerArmGroup);
+
+            refs.rollerArmGroup = rollerArmGroup;
+            refs.roller = roller;
+
+            return g;
+        }
+
+
+        /* =====================================================
+           スライム：緑の光る半透明の塊。明るさのムラ・気泡・波打つ輪郭
+           シェーダーで内部発光ノイズ＋波状の頂点変形＋表面気泡を表現
+           ===================================================== */
+        const slimeVertexShader = `
+            uniform float uTime;
+            varying vec3 vPos;
+            varying vec3 vNormal;
+            varying float vNoise;
+            float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164)))*43758.5453); }
+            float noise(vec3 p){
+                vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+                float n000=hash(i), n100=hash(i+vec3(1,0,0)), n010=hash(i+vec3(0,1,0)), n110=hash(i+vec3(1,1,0));
+                float n001=hash(i+vec3(0,0,1)), n101=hash(i+vec3(1,0,1)), n011=hash(i+vec3(0,1,1)), n111=hash(i+vec3(1,1,1));
+                return mix(mix(mix(n000,n100,f.x),mix(n010,n110,f.x),f.y), mix(mix(n001,n101,f.x),mix(n011,n111,f.x),f.y), f.z);
+            }
+            void main(){
+                vec3 p = position;
+                float n1 = noise(p*1.6 + uTime*0.35);
+                float n2 = noise(p*3.1 - uTime*0.5 + 11.0);
+                float wobble = (n1 - 0.5) * 0.20 + (n2 - 0.5) * 0.09;
+                p += normal * wobble;
+                vNoise = n1 * 0.6 + n2 * 0.4;
+                vPos = p;
+                vNormal = normalize(normalMatrix * normal);
+                vec4 mv = modelViewMatrix * vec4(p, 1.0);
+                gl_Position = projectionMatrix * mv;
+            }
+        `;
+        const slimeFragmentShader = `
+            uniform float uTime; uniform vec3 uColor; uniform vec3 uColorDeep; uniform float uOpacity;
+            varying vec3 vPos; varying vec3 vNormal; varying float vNoise;
+            float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164)))*43758.5453); }
+            void main(){
+                vec3 n = normalize(vNormal);
+                vec3 viewDir = vec3(0.0, 0.0, 1.0);
+                float fres = pow(1.0 - max(dot(n, viewDir), 0.0), 2.0);
+                float patch = smoothstep(0.2, 0.85, vNoise);
+                vec3 col = mix(uColorDeep, uColor, patch);
+                float pulse = 0.82 + 0.18 * sin(uTime * 1.6 + vPos.x * 2.0 + vPos.y * 1.3);
+                col *= (0.85 + 0.55 * patch) * pulse;
+                col += uColor * fres * 1.3;
+                col += uColor * 0.28;   // 暗い場所でも視認できる最低限の発光
+                // 気泡（球内に散らばる小さな明点）
+                vec3 bp = vPos * 3.2;
+                float bn = hash(floor(bp));
+                float bubble = smoothstep(0.955, 0.99, bn) * (0.5 + 0.5 * sin(uTime*3.0 + bn*40.0));
+                col += vec3(0.75, 1.0, 0.85) * bubble * 1.8;
+                float alpha = uOpacity * (0.68 + fres * 0.45) * (0.85 + 0.15 * patch);
+                gl_FragColor = vec4(col, clamp(alpha, 0.0, 0.97));
+            }
+        `;
+        function makeSlimeMaterial(colorHex, deepHex, opacity) {
+            return new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(colorHex) }, uColorDeep: { value: new THREE.Color(deepHex) }, uOpacity: { value: opacity === undefined ? 0.92 : opacity } },
+                vertexShader: slimeVertexShader, fragmentShader: slimeFragmentShader,
+                transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.NormalBlending
+            });
+        }
+        const slimeMaterials = [];
+        function createSlime(x, y, z, sizeType, isParasite) {
+            const scaleMap = { small: 0.4, medium: 0.65, fused: 1.0 };
+            const s = scaleMap[sizeType] || 0.4;
+            const group = new THREE.Group();
+            const geo = new THREE.IcosahedronGeometry(s, isParasite ? 3 : 4);
+            const mat = makeSlimeMaterial(isParasite ? 0x33ffc0 : 0x3CFF8A, 0x0a4a22, isParasite ? 0.95 : 0.92);
+            slimeMaterials.push(mat);
+            const body = new THREE.Mesh(geo, mat);
+            body.scale.set(1, 0.82, 1);
+            body.position.y = s * 0.82;
+            group.add(body);
+            // 内部コアの発光（濃い緑の芯）
+            const core = new THREE.Mesh(new THREE.IcosahedronGeometry(s * 0.4, 1), new THREE.MeshBasicMaterial({ color: 0x0aff88, transparent: true, opacity: 0.5 }));
+            core.position.copy(body.position);
+            group.add(core);
+            const light = new THREE.PointLight(0x33ff99, 1.6 * s, 4.5 * s + 2.5, 2);
+            light.position.copy(body.position);
+            group.add(light);
+            group.userData = { body, mat, core, light, startY: y, sizeScale: s, isParasite };
+            group.position.set(x, 0, z);
+            scene.add(group);
+            return group;
+        }
+        function updateSlimeVisual(g, dt, time) {
+            g.userData.mat.uniforms.uTime.value = time;
+            const s = g.userData.sizeScale;
+            const breathe = 1 + Math.sin(time * 1.1 + g.position.x) * 0.05;
+            g.userData.body.scale.set(breathe, 0.82 * (2 - breathe), breathe);
+            g.userData.light.intensity = (0.7 + Math.sin(time * 2.3 + g.position.z) * 0.35) * s;
+        }
+
+        /* =====================================================
+           音声log→レコーダー / 紙log→メモ帳 / その他log→USB
+           プレイヤーはタブレット端末で内容を閲覧する
+           ===================================================== */
+        const tabletGroup = new THREE.Group();
+        (function buildTablet() {
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.38, 0.014), new THREE.MeshStandardMaterial({ color: 0x11161d, metalness: 0.6, roughness: 0.35 }));
+            tabletGroup.add(body);
+            const bezel = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.33, 0.006), new THREE.MeshStandardMaterial({ color: 0x02040a, metalness: 0.2, roughness: 0.5 }));
+            bezel.position.z = 0.011; tabletGroup.add(bezel);
+            const screenMat = new THREE.MeshBasicMaterial({ map: TEX.screens[0], color: 0xffffff });
+            const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.20, 0.30), screenMat);
+            screen.position.z = 0.0145; tabletGroup.add(screen);
+            const camBtn = new THREE.Mesh(new THREE.CircleGeometry(0.008, 12), new THREE.MeshStandardMaterial({ color: 0x333, metalness: 0.8 }));
+            camBtn.position.set(0, 0.16, 0.0146); tabletGroup.add(camBtn);
+            tabletGroup.userData.screen = screen;
+            tabletGroup.position.set(0.30, -0.55, -0.55);
+            tabletGroup.rotation.set(0.5, -0.15, 0.06);
+            tabletGroup.visible = false;
+            camera.add(tabletGroup);
+        })();
+        let tabletAnim = { show: false, t: 0 };
+        function setTabletOpen(open, kind) {
+            tabletAnim.show = open; tabletAnim.t = 0;
+            tabletGroup.visible = true;
+            if (open) tabletGroup.userData.screen.material.map = TEX.screens[kind === 'alert' ? 2 : (kind === 'usb' ? 1 : 0)];
+        }
+        function updateTablet(dt) {
+            const target = tabletAnim.show ? { y: -0.20, rx: -0.05, rz: 0.02 } : { y: -0.55, rx: 0.5, rz: 0.06 };
+            tabletGroup.position.y += (target.y - tabletGroup.position.y) * Math.min(1, 10 * dt);
+            tabletGroup.rotation.x += (target.rx - tabletGroup.rotation.x) * Math.min(1, 10 * dt);
+            tabletGroup.rotation.z += (target.rz - tabletGroup.rotation.z) * Math.min(1, 10 * dt);
+            if (!tabletAnim.show && Math.abs(tabletGroup.position.y - target.y) < 0.002) tabletGroup.visible = false;
+        }
+
+        /* --- レコーダー（音声ログ） --- */
+        function createRecorderProp(x, y, z) {
+            const g = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.13), new THREE.MeshStandardMaterial({ color: 0x2a2f36, metalness: 0.5, roughness: 0.45 }));
+            body.position.y = 0.03; g.add(body);
+            const grille = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.062, 0.10), new THREE.MeshStandardMaterial({ color: 0x111318, metalness: 0.3, roughness: 0.6 }));
+            grille.position.set(-0.055, 0.032, 0); g.add(grille);
+            for (const sx of [-0.03, 0.03]) {
+                const reel = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.012, 16), new THREE.MeshStandardMaterial({ color: 0x0a0c10, metalness: 0.7, roughness: 0.3 }));
+                reel.rotation.x = Math.PI / 2; reel.position.set(0.03 + sx, 0.065, 0); g.add(reel);
+                g.userData['reel' + sx] = reel;
+            }
+            const led = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff2222, emissiveIntensity: 1.2 }));
+            led.position.set(0.10, 0.062, 0.05); g.add(led);
+            g.userData.led = led; g.userData.kind = 'recorder';
+            g.position.set(x, y, z);
+            return g;
+        }
+        /* --- メモ帳（紙ログ） --- */
+        function createNotepadProp(x, y, z) {
+            const g = new THREE.Group();
+            const pad = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.01, 0.20), new THREE.MeshStandardMaterial({ color: 0xd8cdaa, roughness: 0.85 }));
+            pad.position.y = 0.005; g.add(pad);
+            const cover = new THREE.Mesh(new THREE.BoxGeometry(0.152, 0.006, 0.06), new THREE.MeshStandardMaterial({ color: 0x5c4a2e, roughness: 0.9 }));
+            cover.position.set(0, 0.012, -0.07); cover.rotation.x = -0.3; g.add(cover);
+            const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.13, 8), new THREE.MeshStandardMaterial({ color: 0x223, metalness: 0.6, roughness: 0.3 }));
+            pen.rotation.z = Math.PI / 2 - 0.3; pen.position.set(0.02, 0.014, 0.03); g.add(pen);
+            g.userData.kind = 'notepad';
+            g.position.set(x, y, z);
+            return g;
+        }
+        /* --- USB（その他ログ） --- */
+        function createUsbProp(x, y, z) {
+            const g = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.016, 0.018), new THREE.MeshStandardMaterial({ color: 0x1a1d22, metalness: 0.7, roughness: 0.3 }));
+            g.add(body);
+            const connector = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.008, 0.012), new THREE.MeshStandardMaterial({ color: 0xc0c4c8, metalness: 0.95, roughness: 0.2 }));
+            connector.position.x = 0.032; g.add(connector);
+            const led = new THREE.Mesh(new THREE.SphereGeometry(0.003, 6, 6), new THREE.MeshStandardMaterial({ color: 0x33ff88, emissive: 0x33ff88, emissiveIntensity: 1.5 }));
+            led.position.set(-0.01, 0.01, 0); g.add(led);
+            g.userData.led = led; g.userData.kind = 'usb';
+            g.position.set(x, y, z);
+            g.scale.set(1.6, 1.6, 1.6);   // 小物すぎて見つからないので少し大きめに
+            return g;
+        }
+
+        /* mediaType: 'recorder' | 'notepad' | 'usb' */
+        function createLogConsole(x, y, z, logTitle, logText, fileIdStr, mediaType) {
+            const deskMat = new THREE.MeshStandardMaterial({ color: 0x1c2530, roughness: 0.7, metalness: 0.3 });
+            const desk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.62, 0.4), deskMat);
+            desk.position.set(x, y + 0.31, z); scene.add(desk);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x11161d, metalness: 0.6, roughness: 0.4 });
+            for (const [lx, lz] of [[-0.2, -0.15], [0.2, -0.15], [-0.2, 0.15], [0.2, 0.15]]) {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.62, 0.04), legMat);
+                leg.position.set(x + lx, y + 0.31, z + lz); scene.add(leg);
+            }
+            let prop;
+            if (mediaType === 'recorder') prop = createRecorderProp(x + (DR() - 0.5) * 0.15, y + 0.625, z + (DR() - 0.5) * 0.1);
+            else if (mediaType === 'notepad') prop = createNotepadProp(x + (DR() - 0.5) * 0.15, y + 0.625, z + (DR() - 0.5) * 0.1);
+            else prop = createUsbProp(x + (DR() - 0.5) * 0.15, y + 0.63, z + (DR() - 0.5) * 0.1);
+            prop.rotation.y = DR() * 6.28;
+            scene.add(prop);
+            const icon = mediaType === 'recorder' ? '🔊' : (mediaType === 'notepad' ? '📝' : '💾');
+            prop.userData.prompt = `[E] ${icon} ${fileIdStr} を端末で読み込む`;
+            prop.userData.action = () => {
+                openLog(`${fileIdStr}: ${logTitle}`, logText, mediaType);
+                if (fileIdStr === "FILE 047") state.file047Read = true;
+            };
+            prop.traverse(o => { if (o.isMesh) { o.userData.prompt = prop.userData.prompt; o.userData.action = prop.userData.action; interactables.push(o); } });
+            platformColliders.push({ box: new THREE.Box3().setFromObject(desk), topY: y + 0.62 });
+            return prop;
+        }
+
+        /* 開いた記録媒体：再生アニメ（レコーダーのリール回転／USBの点滅） */
+        let activeLogProp = null, activeLogKind = null;
+        function animatePlayingProps(dt, time) {
+            scene.traverse(o => {});   // no-op placeholder to keep structure explicit
+        }
+
+        /* =====================================================
+           環境ディテール：配線、パイプ、ケーブル束、警告灯、蒸気噴出口、
+           近未来パネル、戦闘跡（弾痕・焦げ跡・ABR死骸・瓦礫・鉄骨）
+           ===================================================== */
+        function addCableRun(x, y, z, len, axis, mat, sag) {
+            const segs = Math.max(4, Math.round(len / 0.4));
+            const pts = [];
+            for (let i = 0; i <= segs; i++) {
+                const t = i / segs;
+                const p = axis === 'x' ? new THREE.Vector3(x - len / 2 + len * t, y - Math.sin(Math.PI * t) * (sag || 0.05), z)
+                    : new THREE.Vector3(x, y - Math.sin(Math.PI * t) * (sag || 0.05), z - len / 2 + len * t);
+                pts.push(p);
+            }
+            const curve = new THREE.CatmullRomCurve3(pts);
+            const geo = new THREE.TubeGeometry(curve, segs * 2, 0.014, 6, false);
+            const m = new THREE.Mesh(geo, mat);
+            scene.add(m);
+            return m;
+        }
+        function addPipeRun(x, y, z, len, axis, r) {
+            const m = new THREE.Mesh(new THREE.CylinderGeometry(r || 0.05, r || 0.05, len, 12), MAT.pipe);
+            if (axis === 'x') m.rotation.z = Math.PI / 2; else m.rotation.x = Math.PI / 2;
+            m.position.set(x, y, z);
+            scene.add(m);
+            // 支持金具
+            const nSup = Math.max(2, Math.round(len / 2.2));
+            for (let i = 0; i < nSup; i++) {
+                const t = (i + 0.5) / nSup;
+                const sup = new THREE.Mesh(new THREE.TorusGeometry((r || 0.05) + 0.015, 0.012, 6, 10), MAT.steelDark);
+                sup.rotation.x = axis === 'x' ? 0 : Math.PI / 2; sup.rotation.y = axis === 'x' ? Math.PI / 2 : 0;
+                if (axis === 'x') sup.position.set(x - len / 2 + len * t, y + 0.03, z);
+                else sup.position.set(x, y + 0.03, z - len / 2 + len * t);
+                scene.add(sup);
+            }
+            return m;
+        }
+        function addConduitBox(x, y, z, glow) {
+            const g = new THREE.Group();
+            const box = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.30, 0.10), MAT.steel);
+            g.add(box);
+            const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.10), new THREE.MeshBasicMaterial({ map: TEX.screens[glow || 0] }));
+            screen.position.set(0, 0.06, 0.051); g.add(screen);
+            for (let i = 0; i < 4; i++) {
+                const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.02), i % 2 ? MAT.lightRed : MAT.lightOn);
+                b.position.set(-0.08 + i * 0.05, -0.08, 0.051); g.add(b);
+            }
+            g.position.set(x, y, z);
+            scene.add(g);
+            return g;
+        }
+        function addWarningLamp(x, y, z, spin) {
+            const g = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.03, 10), MAT.steelDark);
+            g.add(base);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8, 0, 6.28, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xff2a2a, emissive: 0xff2a2a, emissiveIntensity: 1.4, transparent: true, opacity: 0.85 }));
+            dome.position.y = 0.02; g.add(dome);
+            const light = new THREE.PointLight(0xff2a2a, 0, 4, 2);
+            light.position.y = 0.02; g.add(light);
+            g.position.set(x, y, z);
+            g.userData = { dome, light, spin: !!spin, phase: Math.random() * 10 };
+            scene.add(g);
+            warningLamps.push(g);
+            return g;
+        }
+        const warningLamps = [];
+        function updateWarningLamps(time) {
+            warningLamps.forEach(l => {
+                const on = Math.sin(time * 2.0 + l.userData.phase) > 0.2;
+                l.userData.dome.material.emissiveIntensity = on ? 1.6 : 0.15;
+                l.userData.light.intensity = on ? 1.3 : 0;
+                if (l.userData.spin) l.rotation.y += 0.06;
+            });
+        }
+
+        /* --- 近未来パネル（LEDインジケータが明滅する壁面ユニット） --- */
+        function addTechPanel(x, y, z, ry, kind) {
+            const g = addConduitBox(0, 0, 0, kind === 'alert' ? 2 : (kind === 'green' ? 1 : 0));
+            g.position.set(x, y, z); g.rotation.y = ry || 0;
+            techPanels.push(g);
+            return g;
+        }
+        const techPanels = [];
+
+        /* =====================================================
+           蒸気噴出口：リアルタイムで実際に吹き出す
+           ===================================================== */
+        function createSteamVent(x, y, z, ry, o) {
+            o = o || {};
+            const g = new THREE.Group();
+            const ventGlowLight = new THREE.PointLight(0xbfe8ff, 0, 5, 2);
+            const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.10, 10), MAT.steelDark);
+            nozzle.rotation.x = Math.PI / 2; g.add(nozzle);
+            const flange = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 12), MAT.steel);
+            flange.rotation.x = Math.PI / 2; flange.position.z = -0.05; g.add(flange);
+            for (let i = 0; i < 6; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.02, 6), MAT.steelDark); const a = i / 6 * 6.28; b.position.set(Math.cos(a) * 0.09, Math.sin(a) * 0.09, -0.05); b.rotation.x = Math.PI / 2; g.add(b); }
+            g.position.set(x, y, z); g.rotation.y = ry || 0;
+            ventGlowLight.position.set(0, 0, 0.15);
+            g.add(ventGlowLight);
+            scene.add(g);
+            const dir = new THREE.Vector3(0, o.upward ? 0.85 : 0.12, 1).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), ry || 0);
+            const rec = { pos: new THREE.Vector3(x, y, z), dir, acc: 0, period: o.period || 3.2, on: o.period || 3.2, burstLen: o.burstLen || 1.1, phase: o.phase || Math.random() * 3, active: false, light: ventGlowLight };
+            steamVents.push(rec);
+            return g;
+        }
+        const steamVents = [];
+        function updateSteamVents(dt, time) {
+            let nearHiss = 0;
+            steamVents.forEach(v => {
+                const cyc = (time + v.phase) % v.period;
+                const wasActive = v.active;
+                v.active = cyc < v.burstLen;
+                if (v.active) {
+                    v.acc += dt;
+                    // 実際に噴出：短い間隔で粒子を連続放出（濃く・大きく・明るく）
+                    const rate = 90;
+                    let toEmit = v.acc * rate; v.acc = 0;
+                    for (let i = 0; i < toEmit; i++) {
+                        const spread = 0.24;
+                        const jitter = new THREE.Vector3((Math.random() - 0.5) * spread, (Math.random() - 0.5) * spread, (Math.random() - 0.5) * spread);
+                        const dir = v.dir.clone().add(jitter).normalize();
+                        const speed = 2.4 + Math.random() * 2.2;
+                        fxSmoke.emit({
+                            x: v.pos.x + dir.x * 0.08, y: v.pos.y + dir.y * 0.08, z: v.pos.z + dir.z * 0.08,
+                            vx: dir.x * speed, vy: dir.y * speed + 0.7, vz: dir.z * speed,
+                            life: rrand(1.3, 2.2), s0: 0.09, s1: rrand(0.9, 1.5), a: 0.95, drag: 1.5, grav: 0.45,
+                            turb: 0.8, r: 0.86, g: 0.93, b: 1.0, fadeIn: 0.025, fadePow: 0.7
+                        });
+                    }
+                    if (v.light) v.light.intensity = 1.4 + Math.sin(time * 30) * 0.4;
+                    const d = v.pos.distanceTo(player.pos);
+                    nearHiss = Math.max(nearHiss, Math.max(0, 1 - d / 9));
+                    if (!wasActive) audioSys.playSteamBurst(0.35, v.burstLen);
+                } else { v.acc = 0; if (v.light) v.light.intensity *= 0.85; }
+            });
+            audioSys.setHiss(nearHiss * 0.25);
+        }
+
+        /* =====================================================
+           戦闘跡：弾痕・焦げ跡・鉄骨瓦礫・ABR死骸・錆垂れ・油染み
+           ===================================================== */
+        function decalOn(matSet, x, y, z, size, ry, rx) {
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: matSet, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+            m.position.set(x, y, z);
+            m.rotation.set(rx || -Math.PI / 2, 0, ry || DR() * 6.28);
+            scene.add(m);
+            return m;
+        }
+        function wallDecalAt(matSet, x, y, z, size, faceAxis, faceSign) {
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: matSet, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+            m.position.set(x, y, z);
+            if (faceAxis === 'x') m.rotation.y = faceSign > 0 ? Math.PI / 2 : -Math.PI / 2;
+            else m.rotation.y = faceSign > 0 ? 0 : Math.PI;
+            m.rotation.z = DR() * 6.28 * 0.1;
+            scene.add(m);
+            return m;
+        }
+        function bulletCluster(cx, cy, cz, n, faceAxis, faceSign, spread) {
+            for (let i = 0; i < n; i++) {
+                const ox = (DR() - 0.5) * spread, oy = (DR() - 0.5) * spread * 0.7;
+                if (faceAxis === 'y') decalOn(TEX.decal.bullet, cx + ox, 0.02, cz + oy, 0.14 + DR() * 0.1, DR() * 6.28);
+                else if (faceAxis === 'x') wallDecalAt(TEX.decal.bullet, cx, cy + oy, cz + ox, 0.10 + DR() * 0.08, 'x', faceSign);
+                else wallDecalAt(TEX.decal.bullet, cx + ox, cy + oy, cz, 0.10 + DR() * 0.08, 'z', faceSign);
+            }
+        }
+        function scorchPatch(x, y, z, size, faceAxis, faceSign) {
+            if (faceAxis === 'y') decalOn(TEX.decal.scorch, x, 0.018, z, size);
+            else wallDecalAt(TEX.decal.scorch, x, y, z, size, faceAxis, faceSign);
+        }
+        const rebarMat = new THREE.MeshStandardMaterial({ color: 0x6b3b23, metalness: 0.4, roughness: 0.8 });
+        function girderDebris(x, z, ry, len) {
+            const g = new THREE.Group();
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, 0.16), MAT.rustSteel);
+            beam.position.y = 0.12; g.add(beam);
+            for (let i = 0; i < 4; i++) {
+                const rb = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4 + DR() * 0.3, 5), rebarMat);
+                rb.position.set(-len / 2 + DR() * len, 0.1 + DR() * 0.1, (DR() - 0.5) * 0.2);
+                rb.rotation.set(DR(), DR(), DR());
+                g.add(rb);
+            }
+            for (let i = 0; i < 5; i++) {
+                const c = new THREE.Mesh(new THREE.BoxGeometry(0.08 + DR() * 0.1, 0.05 + DR() * 0.06, 0.08 + DR() * 0.1), MAT.steel);
+                c.position.set(-len / 2 + DR() * len, 0.03, (DR() - 0.5) * 0.3);
+                c.rotation.y = DR() * 6.28;
+                g.add(c);
+            }
+            g.position.set(x, 0, z); g.rotation.y = ry;
+            scene.add(g);
+            g.updateMatrixWorld(true);
+            wallColliders.push({ box: new THREE.Box3().setFromObject(g) });
+        }
+        function abrCorpse(x, z, ry, colorHex) {
+            const m = createStandardABR(colorHex || 0x151a1f);
+            m.rotation.set(Math.PI / 2 + (DR() - 0.5) * 0.3, ry, (DR() - 0.5) * 0.5);
+            m.position.set(x, 0.12, z);
+            m.traverse(o => { if (o.isMesh && o.material && o.material.emissive) { o.material = o.material.clone(); o.material.emissive.set(0x000000); o.material.emissiveIntensity = 0; } });
+            scene.add(m);
+            m.updateMatrixWorld(true);
+            wallColliders.push({ box: new THREE.Box3().setFromObject(m) });
+            scorchPatch(x, 0.016, z, 1.6, 'y');
+            return m;
+        }
+        function rustDripWall(x, y, z, size, faceAxis, faceSign) { wallDecalAt(TEX.decal.rustdrip, x, y, z, size, faceAxis, faceSign); }
+        function oilStain(x, z, size) { decalOn(TEX.decal.oil, x, 0.017, z, size); }
+        function crackDecal(x, y, z, size, faceAxis, faceSign) { faceAxis === 'y' ? decalOn(TEX.decal.crack, x, 0.019, z, size) : wallDecalAt(TEX.decal.crack, x, y, z, size, faceAxis, faceSign); }
+
+        function createWall(w, h, d, x, y, z, matOverride) {
+            const mat = matOverride || (Math.random() < 0.5 ? MAT.wall : MAT.wallRust);
+            const geo = new THREE.BoxGeometry(w, h, d);
+            fixBoxUV(geo, w, h, d, 2.2);
+            const m = new THREE.Mesh(geo, mat);
+            m.position.set(x, y, z); scene.add(m);
+            m.updateMatrixWorld(true);
+            wallColliders.push({ box: new THREE.Box3().setFromObject(m), mesh: m });
+            return m;
+        }
+        function createFloorSlab(w, d, x, y, z, clean) {
+            const geo = new THREE.PlaneGeometry(w, d);
+            fixBoxUV; // no-op reference to keep function group readable
+            const m = new THREE.Mesh(geo, clean ? MAT.floorClean : MAT.floor);
+            m.rotation.x = -Math.PI / 2; m.position.set(x, y, z);
+            m.receiveShadow = true;
+            scene.add(m);
+            return m;
+        }
+        function createCeilingSlab(w, d, x, y, z) {
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.ceiling);
+            m.rotation.x = Math.PI / 2; m.position.set(x, y, z);
+            scene.add(m);
+            return m;
+        }
+
+        /* シャッター式の扉：実際にスラットが上へ巻き上がっていくように見せる
+           （複数スラットのグループを上下に伸縮させ、上端にロールを表現） */
+        function createShutterDoor(w, h, x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            const nSlats = 10;
+            const slatH = h / nSlats;
+            const slats = [];
+            const hazardStrip = new THREE.MeshBasicMaterial({ map: TEX.hazard });
+            for (let i = 0; i < nSlats; i++) {
+                const mat = (i === nSlats - 1) ? TEX.slatHazard : TEX.slatDoor;
+                const geo = new THREE.BoxGeometry(w, slatH * 0.98, 0.12);
+                fixBoxUV(geo, w, slatH, 0.12, 1.0);
+                const s = new THREE.Mesh(geo, surfMat(mat, { rough: 0.6, metal: 0.55, bump: 1.0 }));
+                s.position.set(0, slatH * (i + 0.5), 0);
+                group.add(s); slats.push(s);
+            }
+            const hazardBar = new THREE.Mesh(new THREE.BoxGeometry(w, 0.10, 0.13), hazardStrip);
+            hazardBar.position.set(0, 0.05, 0); group.add(hazardBar);
+            const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, w + 0.3, 14), MAT.steelDark);
+            roller.rotation.z = Math.PI / 2; roller.position.set(0, h + 0.22, 0); group.add(roller);
+            const railL = new THREE.Mesh(new THREE.BoxGeometry(0.10, h + 0.5, 0.16), MAT.steel);
+            railL.position.set(-w / 2 - 0.05, (h + 0.5) / 2, 0); group.add(railL);
+            const railR = railL.clone(); railR.position.x = w / 2 + 0.05; group.add(railR);
+            scene.add(group);
+            group.updateMatrixWorld(true);
+            const doorObj = { group, slats, w, h, initY: 0, currentY: 0, targetY: 0, isOpen: false, nSlats, roller };
+            doors.push(doorObj);
+            const doorCollider = { box: new THREE.Box3(new THREE.Vector3(x - w / 2, 0, z - 0.1), new THREE.Vector3(x + w / 2, h, z + 0.1)), doorRef: doorObj };
+            wallColliders.push(doorCollider);
+            return doorObj;
+        }
+        function createDoorWithWall(w, h, x, z) {
+            const doorObj = createShutterDoor(w, h, x, z);
+            const sideW = (8 - w) / 2;
+            if (sideW > 0) {
+                createWall(sideW, 6.5, 0.5, x - w / 2 - sideW / 2, 3.25, z);
+                createWall(sideW, 6.5, 0.5, x + w / 2 + sideW / 2, 3.25, z);
+            }
+            createWall(8, 6.5 - h, 0.5, x, h + (6.5 - h) / 2, z);
+            addWarningLamp(x - w / 2 - 0.2, h + 0.3, z, true);
+            addWarningLamp(x + w / 2 + 0.2, h + 0.3, z, true);
+            return doorObj;
+        }
+
+        /* シャッターの実アニメーション：スラットが巻き上がる／下りる動き＋振動＋音 */
+        function updateShutters(dt, time) {
+            doors.forEach(d => {
+                if (!d.slats) return; // 旧型doorは対象外
+                const speedOpen = 3.2, speedClose = 4.4;
+                if (d.isOpen && d.currentY < d.h) {
+                    if (d.currentY === 0 && !d.shutterPlayed) { audioSys.playShutter(d.h / speedOpen); d.shutterPlayed = true; d.shutterClosePlayed = false; }
+                    d.currentY = Math.min(d.h, d.currentY + speedOpen * dt);
+                } else if (!d.isOpen && d.currentY > 0) {
+                    if (d.currentY === d.h && !d.shutterClosePlayed) { audioSys.playShutter(d.h / speedClose); d.shutterClosePlayed = true; d.shutterPlayed = false; }
+                    d.currentY = Math.max(0, d.currentY - speedClose * dt);
+                } else return;
+                const shake = (d.currentY > 0 && d.currentY < d.h) ? Math.sin(time * 60) * 0.01 : 0;
+                d.slats.forEach((s, i) => {
+                    const slatH = d.h / d.nSlats;
+                    const raised = Math.min(slatH, Math.max(0, d.currentY - i * slatH));
+                    s.scale.y = Math.max(0.001, 1 - raised / slatH);
+                    s.position.y = slatH * (i + 0.5) + raised * 0.5 + (raised > 0 && raised < slatH ? shake : 0);
+                    s.visible = s.scale.y > 0.01;
+                });
+                d.roller.rotation.x += dt * 8 * (d.isOpen ? 1 : -1);
+                d.group.updateMatrixWorld(true);
+            });
+        }
+
+        /* =====================================================
+           1977強襲：横の壁を突き破って現れる（上から降ってこない）
+           ===================================================== */
+        let breakWallPanel = null, breakWallDebris = [];
+        function buildBreakableWall(x, y, z, w, h) {
+            // 見た目は通常の壁と同じにしておき、破壊時だけ砕けて消える
+            const geo = new THREE.BoxGeometry(0.5, h, w);
+            fixBoxUV(geo, 0.5, h, w, 2.2);
+            const m = new THREE.Mesh(geo, MAT.wallRust);
+            m.position.set(x, y, z); m.rotation.y = Math.PI / 2;
+            scene.add(m);
+            m.updateMatrixWorld(true);
+            const collider = { box: new THREE.Box3().setFromObject(m), mesh: m };
+            wallColliders.push(collider);
+            breakWallPanel = { mesh: m, collider, x, y, z, w, h };
+            return breakWallPanel;
+        }
+        function shatterBreakableWall() {
+            if (!breakWallPanel) return;
+            const p = breakWallPanel;
+            p.mesh.visible = false;
+            const idx = wallColliders.indexOf(p.collider);
+            if (idx >= 0) wallColliders.splice(idx, 1);
+            // 瓦礫の破片を実際に生成して飛び散らせる
+            const chunkMat = MAT.wallRust;
+            const n = 22;
+            for (let i = 0; i < n; i++) {
+                const sx = 0.15 + Math.random() * 0.3, sy = 0.15 + Math.random() * 0.4, sz = 0.15 + Math.random() * 0.3;
+                const c = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), chunkMat);
+                c.position.set(p.x + (Math.random() - 0.5) * 0.4, p.y + (Math.random() - 0.5) * p.h * 0.8, p.z + (Math.random() - 0.5) * p.w * 0.8);
+                const dir = new THREE.Vector3(p.dirSign || 1, (Math.random() - 0.3), (Math.random() - 0.5)).normalize();
+                const speed = 4 + Math.random() * 6;
+                scene.add(c);
+                breakWallDebris.push({ mesh: c, vx: dir.x * speed, vy: dir.y * speed + 2, vz: dir.z * speed, rvx: (Math.random() - 0.5) * 8, rvy: (Math.random() - 0.5) * 8, rvz: (Math.random() - 0.5) * 8, life: 3.5 });
+            }
+            smokeBurst(p.x, p.y, p.z, 30, 1.4, 5.5, [0.6, 0.6, 0.62], 3.2);
+            for (let i = 0; i < 14; i++) fxDust.emit({ x: p.x, y: p.y + (Math.random() - 0.5) * 2, z: p.z, vx: (p.dirSign || 1) * (1 + Math.random() * 2), vy: Math.random(), vz: (Math.random() - 0.5) * 2, life: 4 + Math.random() * 3, s0: 0.05, s1: 0.05, a: 0.5, turb: 0.3, r: 0.8, g: 0.78, b: 0.72 });
+            sparkBurst(p.x, p.y, p.z, 20, 6, [1, 0.7, 0.3], 3);
+            audioSys.playCrash();
+            state.shake = 1.0;
+        }
+        function updateBreakWallDebris(dt) {
+            for (let i = breakWallDebris.length - 1; i >= 0; i--) {
+                const d = breakWallDebris[i];
+                d.vy -= 12 * dt;
+                d.mesh.position.x += d.vx * dt; d.mesh.position.y += d.vy * dt; d.mesh.position.z += d.vz * dt;
+                d.mesh.rotation.x += d.rvx * dt; d.mesh.rotation.y += d.rvy * dt; d.mesh.rotation.z += d.rvz * dt;
+                if (d.mesh.position.y < 0.05) { d.mesh.position.y = 0.05; d.vy *= -0.3; d.vx *= 0.6; d.vz *= 0.6; }
+                d.life -= dt;
+                if (d.life <= 0) { scene.remove(d.mesh); breakWallDebris.splice(i, 1); }
+            }
+        }
+
+        /* =====================================================
+           1977のモーション：試験用.htmlと同じ「毎フレーム多段イージング」方式
+           targetXxx を毎フレーム計算し、smoothSpeed=12*dtで収束させることで
+           ワープ（突然のポーズ切り替え）を排除する
+           ===================================================== */
+        const animState = { mode: 'roller', modeWeight: 1.0, action: 'none', actionTimer: 0.0, moveBlend: 0 };
+        const defaultPose = {
+            leftUpperRot: { x: -0.3, y: 0.2, z: 0.35 },
+            leftElbowRot: { x: -0.4, y: 0, z: -0.4 },
+            rightUpperRot: { x: -0.3, y: -0.2, z: -0.35 },
+            rightElbowRot: { x: -0.4, y: 0, z: 0.4 }
+        };
+        function bossTriggerAction(name) { animState.action = name; animState.actionTimer = 0; }
+
+        function updateBoss1977(dt, time) {
+            if (!boss1977 || !boss1977.visible) return;
+
+            const targetWeight = (animState.mode === 'roller') ? 1.0 : 0.0;
+            animState.modeWeight += (targetWeight - animState.modeWeight) * 4.0 * dt;
+            const mw = animState.modeWeight;
+
+            refs.thighLGroup.rotation.x = THREE.MathUtils.lerp(-0.05, -0.7, mw);
+            refs.shinGroupL.rotation.x = THREE.MathUtils.lerp(0.1, 1.25, mw);
+            refs.thighRGroup.rotation.x = THREE.MathUtils.lerp(-0.05, -0.7, mw);
+            refs.shinGroupR.rotation.x = THREE.MathUtils.lerp(0.1, 1.25, mw);
+            refs.rollerArmGroup.rotation.x = THREE.MathUtils.lerp(-0.9, 0.4, mw);
+
+            let runOffsetL = 0, runOffsetR = 0;
+            if (animState.charging) {
+                if (animState.mode === 'roller') {
+                    refs.roller.rotation.x += dt * 22.0;
+                    boss1977.position.y += Math.sin(time * 34.0) * 0.05 * dt * 60 * 0.016;
+                    boss1977.rotation.x = THREE.MathUtils.lerp(boss1977.rotation.x, -0.12, dt * 6);
+                }
+            } else if (animState.mode === 'roller') {
+                refs.roller.rotation.x += dt * 1.6;
+                boss1977.rotation.x = THREE.MathUtils.lerp(boss1977.rotation.x, 0, dt * 6);
+            }
+            refs.hipL.rotation.x = runOffsetL;
+            refs.hipR.rotation.x = runOffsetR;
+
+            let targetRightUpper = { ...defaultPose.rightUpperRot };
+            let targetRightElbow = { ...defaultPose.rightElbowRot };
+            let targetLeftUpper = { ...defaultPose.leftUpperRot };
+            let targetLeftElbow = { ...defaultPose.leftElbowRot };
+
+            if (animState.action !== 'none') {
+                animState.actionTimer += dt;
+                const t = animState.actionTimer;
+
+                if (animState.action === 'grabL') {           /* 左腕で対象を掴む（1978） */
+                    if (t < 0.4) { targetLeftUpper.x = THREE.MathUtils.lerp(defaultPose.leftUpperRot.x, -1.3, t / 0.4); targetLeftElbow.x = THREE.MathUtils.lerp(defaultPose.leftElbowRot.x, -0.2, t / 0.4); refs.fingers.forEach(f => f.rotation.z = THREE.MathUtils.lerp(0, -0.6, t / 0.4)); }
+                    else if (t < 0.8) { targetLeftUpper.x = -1.3; targetLeftElbow.x = -0.2; refs.fingers.forEach(f => f.rotation.z = THREE.MathUtils.lerp(-0.6, 0.55, (t - 0.4) / 0.4)); }
+                    else { targetLeftUpper.x = -1.3; targetLeftElbow.x = -0.2; refs.fingers.forEach(f => f.rotation.z = 0.55); animState.action = 'none'; }
+                } else if (animState.action === 'grabR') {     /* 右腕で対象を掴む（3302） */
+                    if (t < 0.35) { targetRightUpper.x = THREE.MathUtils.lerp(defaultPose.rightUpperRot.x, 0.7, t / 0.35); targetRightElbow.x = THREE.MathUtils.lerp(defaultPose.rightElbowRot.x, -1.4, t / 0.35); }
+                    else if (t < 0.75) { const p = (t - 0.35) / 0.4; targetRightUpper.x = THREE.MathUtils.lerp(0.7, -1.5, p); targetRightElbow.x = THREE.MathUtils.lerp(-1.4, -0.1, p); refs.drillGroup.rotation.y += dt * 40.0; }
+                    else { targetRightUpper.x = -1.5; targetRightElbow.x = -0.1; animState.action = 'none'; }
+                } else if (animState.action === 'crushR') {    /* 右腕で握り潰す（3302破壊） */
+                    const p = Math.min(1, t / 0.6);
+                    targetRightUpper.x = -1.5; targetRightElbow.x = THREE.MathUtils.lerp(-0.1, -1.7, p); targetRightElbow.z = THREE.MathUtils.lerp(0.4, 1.1, p);
+                    refs.fingers && null;
+                    if (t > 0.6) animState.action = 'none';
+                } else if (animState.action === 'drillThrust') { /* ドリル突き刺し（プレイヤー方向） */
+                    if (t < 0.35) { const p = t / 0.35; targetRightUpper.x = THREE.MathUtils.lerp(defaultPose.rightUpperRot.x, 0.6, p); targetRightElbow.x = THREE.MathUtils.lerp(defaultPose.rightElbowRot.x, -1.6, p); targetRightElbow.z = -0.6; }
+                    else if (t < 0.75) { const p = (t - 0.35) / 0.4; targetRightUpper.x = THREE.MathUtils.lerp(0.6, -1.8, p); targetRightElbow.x = THREE.MathUtils.lerp(-1.6, -0.05, p); targetRightElbow.z = -0.1; refs.drillGroup.rotation.y += dt * 70.0; }
+                    else { targetRightUpper.x = -1.8; targetRightElbow.x = -0.05; targetRightElbow.z = -0.1; if (t > 1.4) animState.action = 'none'; }
+                } else if (animState.action === 'flinch') {
+                    const p = Math.min(1, t / 0.5);
+                    targetLeftUpper.x = THREE.MathUtils.lerp(-0.9, defaultPose.leftUpperRot.x, p);
+                    targetRightUpper.x = THREE.MathUtils.lerp(-0.9, defaultPose.rightUpperRot.x, p);
+                    if (t > 0.5) animState.action = 'none';
+                }
+            }
+
+            const smoothSpeed = Math.min(1, 12.0 * dt);
+            refs.rightUpperGroup.rotation.x += (targetRightUpper.x - refs.rightUpperGroup.rotation.x) * smoothSpeed;
+            refs.rightUpperGroup.rotation.y += (targetRightUpper.y - refs.rightUpperGroup.rotation.y) * smoothSpeed;
+            refs.rightUpperGroup.rotation.z += (targetRightUpper.z - refs.rightUpperGroup.rotation.z) * smoothSpeed;
+            refs.rightElbowGroup.rotation.x += (targetRightElbow.x - refs.rightElbowGroup.rotation.x) * smoothSpeed;
+            refs.rightElbowGroup.rotation.y += (targetRightElbow.y - refs.rightElbowGroup.rotation.y) * smoothSpeed;
+            refs.rightElbowGroup.rotation.z += (targetRightElbow.z - refs.rightElbowGroup.rotation.z) * smoothSpeed;
+            refs.leftUpperGroup.rotation.x += (targetLeftUpper.x - refs.leftUpperGroup.rotation.x) * smoothSpeed;
+            refs.leftUpperGroup.rotation.y += (targetLeftUpper.y - refs.leftUpperGroup.rotation.y) * smoothSpeed;
+            refs.leftUpperGroup.rotation.z += (targetLeftUpper.z - refs.leftUpperGroup.rotation.z) * smoothSpeed;
+            refs.leftElbowGroup.rotation.x += (targetLeftElbow.x - refs.leftElbowGroup.rotation.x) * smoothSpeed;
+            refs.leftElbowGroup.rotation.y += (targetLeftElbow.y - refs.leftElbowGroup.rotation.y) * smoothSpeed;
+            refs.leftElbowGroup.rotation.z += (targetLeftElbow.z - refs.leftElbowGroup.rotation.z) * smoothSpeed;
+
+            scene.traverse(o => { if (o.material === sensorMat) o.material.emissiveIntensity = 4 + Math.sin(time * 4.0) * 2.0; });
+        }
+
+        /* =====================================================
+           1977強襲シーケンス：横の壁を突き破って現れる
+           ===================================================== */
+        let abr3302WorldPos = new THREE.Vector3();
+        function trigger1977AmbushSequence() {
+            state.inCutscene = true;
+            state.step = SEQ.BOSS_ATTACK;
+            document.getElementById('bar-top').style.height = "10vh";
+            document.getElementById('bar-bottom').style.height = "10vh";
+
+            player.pos.set(0, 1.6, -388);
+            yaw = -0.35; pitch = 0.05;
+            const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+            const qP = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+            camera.quaternion.multiplyQuaternions(qY, qP);
+
+            showSubtitle("<span class='speaker-3302'>3302:</span>「何か……壁の向こうから重い足音が……!?」", 3200);
+            audioSys.playHeavyRumble();
+
+            let warnT = 0;
+            const warnInterval = setInterval(() => {
+                warnT += 0.1;
+                document.getElementById('danger-overlay').style.background = (Math.sin(warnT * 22) > 0) ? "rgba(255,20,20,0.35)" : "rgba(0,0,0,0)";
+                boss1977.position.set(breakWallPanel.x - 2.6, 0, breakWallPanel.z);
+                boss1977.visible = false;
+                if (warnT >= 1.0) {
+                    clearInterval(warnInterval);
+                    document.getElementById('danger-overlay').style.background = "rgba(0,0,0,0)";
+
+                    /* 壁を突き破って登場 */
+                    breakWallPanel.dirSign = 1;
+                    shatterBreakableWall();
+                    audioSys.playTear();
+                    boss1977.visible = true;
+                    boss1977.position.set(breakWallPanel.x - 1.0, 0, breakWallPanel.z);
+                    boss1977.rotation.y = -Math.PI / 2;
+                    animState.mode = 'roller'; animState.charging = true;
+
+                    const chargeStart = performance.now();
+                    const chargeDur = 950;
+                    const fromX = boss1977.position.x, toX = -0.3, toZ = -388.6;
+                    const fromZ = boss1977.position.z;
+                    const chargeInterval = setInterval(() => {
+                        const p = Math.min(1, (performance.now() - chargeStart) / chargeDur);
+                        const ease = p < 0.7 ? (p / 0.7) * 0.85 : 0.85 + (p - 0.7) / 0.3 * 0.15;
+                        boss1977.position.x = THREE.MathUtils.lerp(fromX, toX, ease);
+                        boss1977.position.z = THREE.MathUtils.lerp(fromZ, toZ, ease);
+                        state.shake = Math.max(state.shake, 0.35);
+                        if (Math.random() < 0.3) smokeBurst(boss1977.position.x, 0.3, boss1977.position.z, 1, 0.5, 1.5, [0.5, 0.5, 0.55], 0.8);
+                        if (p >= 1) {
+                            clearInterval(chargeInterval);
+                            animState.charging = false;
+                            audioSys.playHit();
+                            state.shake = 1.0;
+
+                            /* 右腕で3302を掴む */
+                            bossTriggerAction('grabR');
+                            setTimeout(() => {
+                                abr3302.getWorldPosition(abr3302WorldPos);
+                                abr3302.position.set(0, -4.6, 0.3);
+                                refs.rightLowerGroup.add(abr3302);
+                                abr3302.rotation.set(Math.PI / 2, 0, 0);
+                                showSubtitle("<span class='speaker-1977'>ABR1977:</span>「3302。妨害電波の発信源はお前か。排除する。」", 4200);
+
+                                setTimeout(() => {
+                                    /* 3302をプレイヤーの目の前で握り潰す */
+                                    bossTriggerAction('crushR');
+                                    audioSys.playCrash();
+                                    setTimeout(() => {
+                                        destroyAbr3302InFrontOfPlayer();
+                                        setTimeout(() => {
+                                            /* 左腕で1978を掴む */
+                                            bossTriggerAction('grabL');
+                                            abr1978.position.set(0, -4.6, 0.3);
+                                            refs.leftLowerGroup.add(abr1978);
+                                            abr1978.rotation.set(Math.PI / 2, 0, 0);
+                                            showSubtitle("<span class='speaker-1977'>ABR1977:</span>「1978……お前の感情データは非効率だ。刺突により記憶コアを穿ち完全消去する。」", 6500);
+
+                                            setTimeout(() => {
+                                                document.getElementById('bar-top').style.height = "0";
+                                                document.getElementById('bar-bottom').style.height = "0";
+                                                state.inCutscene = false;
+                                                state.rescueTimer = 6.0;
+                                                showSubtitle("⚡【左クリック】高圧放電を撃ち込み、1977が刺す前に1978を助け出せ！", 7000);
+                                                document.getElementById('obj-val').textContent = "【左クリック放電】で1977を怯ませ、1978を救出せよ！";
+                                            }, 2200);
+                                        }, 900);
+                                    }, 550);
+                                }, 2200);
+                            }, 700);
+                        }
+                    }, 16);
+                }
+            }, 100);
+        }
+
+        /* 3302をプレイヤーの目の前で実際に破壊する */
+        function destroyAbr3302InFrontOfPlayer() {
+            const wp = new THREE.Vector3();
+            abr3302.getWorldPosition(wp);
+            audioSys.playExplosion();
+            state.shake = 0.8;
+            document.getElementById('flash-overlay').style.background = "rgba(51,255,102,0.55)";
+            setTimeout(() => { document.getElementById('flash-overlay').style.background = "rgba(0,240,255,0)"; }, 140);
+
+            sparkBurst(wp.x, wp.y, wp.z, 40, 6.5, [0.5, 1.0, 0.6], 3);
+            smokeBurst(wp.x, wp.y, wp.z, 16, 0.7, 3.0, [0.5, 0.55, 0.5], 2.4);
+
+            /* 破片としてバラバラになったパーツを飛び散らせる */
+            const brokenMat = new THREE.MeshStandardMaterial({ color: 0x0a0d10, metalness: 0.7, roughness: 0.5, emissive: 0x113322, emissiveIntensity: 0.4 });
+            abr3302.children.slice().forEach(child => {
+                if (!child.isMesh && !(child.children && child.children.length)) return;
+                const meshes = [];
+                child.traverse ? child.traverse(o => { if (o.isMesh) meshes.push(o); }) : (child.isMesh && meshes.push(child));
+                meshes.forEach(m => {
+                    const clone = m.clone();
+                    clone.material = brokenMat;
+                    const wp2 = new THREE.Vector3(); m.getWorldPosition(wp2);
+                    scene.add(clone);
+                    clone.position.copy(wp2);
+                    clone.quaternion.copy(new THREE.Quaternion());
+                    const dir = new THREE.Vector3((Math.random() - 0.5), Math.random() * 0.6 + 0.2, (Math.random() - 0.5)).normalize();
+                    const speed = 2 + Math.random() * 4;
+                    breakWallDebris.push({ mesh: clone, vx: dir.x * speed, vy: dir.y * speed + 2, vz: dir.z * speed, rvx: (Math.random() - 0.5) * 10, rvy: (Math.random() - 0.5) * 10, rvz: (Math.random() - 0.5) * 10, life: 4 });
+                });
+            });
+            refs.rightLowerGroup.remove(abr3302);
+            abr3302.visible = false;
+            document.getElementById('comp-val').textContent = "ABR1978";
+        }
+
+        /* 助けられなかった場合：ドリル突き刺しで死亡 */
+        function triggerPlayerGrabbedKillSequence() {
+            state.inCutscene = true;
+            document.getElementById('bar-top').style.height = "10vh";
+            document.getElementById('bar-bottom').style.height = "10vh";
+
+            audioSys.playHit();
+            if (abr1978.visorMesh) abr1978.visorMesh.material.color.setHex(0x111111);
+            showSubtitle("<span class='speaker-1978'>1978:</span>「あ……あ……っ……！」", 3000);
+
+            setTimeout(() => {
+                showSubtitle("<span class='speaker-1977'>ABR1977:</span>「1978の処理を一時中断。妨害を行う人間を排除する。」", 4000);
+                bossTriggerAction('drillThrust');
+                const startTime = performance.now();
+                const killInterval = setInterval(() => {
+                    const elapsed = (performance.now() - startTime) / 1000;
+                    boss1977.position.z = THREE.MathUtils.lerp(boss1977.position.z, player.pos.z - 2.0, elapsed * 1.6);
+                    boss1977.position.y = THREE.MathUtils.lerp(boss1977.position.y, -1.0, elapsed * 1.6);
+                    camera.lookAt(boss1977.position.x, boss1977.position.y + 3.0, boss1977.position.z);
+                    document.getElementById('danger-overlay').style.background = (Math.sin(elapsed * 50) > 0) ? "rgba(255,0,30,0.85)" : "rgba(0,0,0,0.9)";
+                    if (elapsed >= 1.5) {
+                        clearInterval(killInterval);
+                        audioSys.playHit();
+                        triggerGameOver("1977に視界の目の前で掴み上げられ、ドリルで突き刺されました。");
+                    }
+                }, 30);
+            }, 2000);
+        }
+
+        let door1, door2, door2_5, runDoor, finalDoor;
+        let runFloorMesh;
+        let abr1978, abr3302, boss1977;
+        let trapEnemies = [];
+
+        function buildMap() {
+            /* ===== エリア1: 初期セーフルーム ===== */
+            createFloorSlab(8, 20, 0, 0, 0, true);
+            createCeilingSlab(8, 20, 0, 6.5, 0);
+            createWall(0.5, 6.5, 20, -4.25, 3.25, 0);
+            createWall(0.5, 6.5, 20, 4.25, 3.25, 0);
+            createWall(8.5, 6.5, 0.5, 0, 3.25, 10);
+            door1 = createDoorWithWall(4, 4, 0, -10);
+            addCableRun(-3.9, 5.8, 0, 18, 'z', MAT.cableBlack, 0.15);
+            addCableRun(3.9, 6.0, 0, 18, 'z', MAT.cableBlue, 0.1);
+            addPipeRun(-4.0, 5.5, -3, 8, 'z', 0.06);
+            addTechPanel(-4.2, 1.6, -5, Math.PI / 2, 'cyan');
+            addTechPanel(4.2, 1.6, 3, -Math.PI / 2, 'green');
+            addWarningLamp(0, 6.3, 9.4, true);
+
+            createLogConsole(-2.5, 0, 5, "ローアン所長の遺言", "【最終個人記録・音声】\n\n1977は失敗作ではない。\nむしろ成功しすぎた。\n理解した結果、人間を否定した。", "FILE 038", 'recorder');
+            createLogConsole(2.5, 0, 2, "ABR1978バックアップ計画", "【機密計画・データ】\n1978は唯一、人間との共存を望んでいる。\n人格データを複数施設へ分散保存する。", "FILE 039", 'usb');
+            createLogConsole(0.2, 0, 7.2, "バイオII責任者記録", "【人事断片・2603】\n氏名: ヴァンス\n所属: バイオテクノロジーII\n役職: 部門責任者\n\n不死身の液体を完成と記録。\n副作用の検証欄は空欄。\n以後、幹部層の独占リストに名がある。", "FILE 036", 'usb');
+
+            const dPanel1 = createButtonPanel(2.5, 1.1, -9.7, 0, { color: 0x22c8ff });
+            dPanel1.userData = {
+                prompt: "[E] シャッターを開放する", action: () => {
+                    if (state.step === SEQ.START_SAFE && !door1.isOpen) {
+                        audioSys.playAlert();
+                        door1.isOpen = true;
+                        pressButtonPanel(dPanel1, 0x22c8ff);
+                        showSubtitle("シャッターを開放しました。", 3500);
+                        document.getElementById('obj-val').textContent = "通路を進む";
+                    }
+                }
+            };
+            dPanel1.traverse(o => { if (o.isMesh) { o.userData = dPanel1.userData; interactables.push(o); } });
+
+            /* ===== エリア2: 伏撃通路（戦闘跡あり） ===== */
+            createFloorSlab(12, 40, 0, 0, -30);
+            createCeilingSlab(12, 40, 0, 6.5, -30);
+            createWall(0.5, 6.5, 40, -6.25, 3.25, -30);
+            createWall(0.5, 6.5, 40, 6.25, 3.25, -30);
+            door2 = createDoorWithWall(4, 4, 0, -50);
+            addPipeRun(0, 6.2, -30, 40, 'z', 0.08);
+            addCableRun(-6.0, 5.8, -20, 20, 'z', MAT.cableRed, 0.2);
+            addCableRun(6.0, 5.9, -35, 12, 'z', MAT.cableYellow, 0.15);
+            for (let z = -14; z > -48; z -= 8.5) { addTechPanel((z / 8.5 % 2 === 0) ? -5.9 : 5.9, 1.7, z, (z / 8.5 % 2 === 0) ? Math.PI / 2 : -Math.PI / 2, 1); addWarningLamp((z / 8.5 % 2 === 0) ? -5.9 : 5.9, 6.3, z, false); }
+            createSteamVent(-6.0, 2.4, -25, Math.PI / 2, { period: 4.0, burstLen: 1.3, phase: 0.5 });
+            createSteamVent(6.0, 1.2, -40, -Math.PI / 2, { period: 3.4, burstLen: 1.0, phase: 2.0 });
+
+            createLogConsole(-4.5, 0, -20, "1977の演説", "【演説記録・音声】\n私は王ではない。解決策だ。", "FILE 040", 'recorder');
+            createLogConsole(4.5, 0, -38, "リマラード研究資料", "【被検体資料・データ】\n皮膚は溶解し、数秒後に再生する。", "FILE 041", 'usb');
+            createLogConsole(1.4, 0, -46, "体制発足通知", "【内部通達・2557年12月】\nローアン所長の後任として、\n幹部 リマラード・アランシードが実権を掌握。\n方針: 旧式AIへ転換。\nABRは分解・分析。一部のみ冷凍保存。", "FILE 037", 'notepad');
+
+            /* 伏撃跡：銃弾痕・焦げ跡・鉄骨瓦礫・ABR死骸 */
+            bulletCluster(-3, 2.5, -18, 8, 'x', 1, 1.6);
+            bulletCluster(3, 2.2, -26, 7, 'x', -1, 1.4);
+            bulletCluster(0, 0, -32, 10, 'y', 0, 2.5);
+            scorchPatch(-2, 0, -22, 2.4, 'y');
+            scorchPatch(2.5, 0, -30, 2.0, 'y');
+            scorchPatch(0, 2.0, -36, 2.2, 'x', 1);
+            girderDebris(-1.5, -28, 0.3, 3.2);
+            girderDebris(2.0, -42, -0.5, 2.4);
+            abrCorpse(-4.5, -24, 0.6, 0x151a1f);
+            abrCorpse(3.8, -34, -0.4, 0x151a1f);
+            oilStain(-1.0, -18, 1.4);
+            rustDripWall(-6.24, 3.5, -20, 2.5, 'x', 1);
+
+            /* ===== エリア3: セーフルーム2 ===== */
+            createFloorSlab(8, 20, 0, 0, -60, true);
+            createCeilingSlab(8, 20, 0, 6.5, -60);
+            createWall(0.5, 6.5, 20, -4.25, 3.25, -60);
+            createWall(0.5, 6.5, 20, 4.25, 3.25, -60);
+            door2_5 = createDoorWithWall(4, 4, 0, -70);
+            addCableRun(4.0, 6.0, -55, 16, 'z', MAT.cableBlack, 0.12);
+            addTechPanel(-4.2, 1.6, -65, Math.PI / 2, 'green');
+
+            createLogConsole(-2.8, 0, -54, "未知のメモ", "【手書きメモ】\nあの子が諦めない限り、私も諦めない。", "FILE 042", 'notepad');
+            createLogConsole(2.8, 0, -58, "The Releaseの真実", "【回想・音声】\n1977は事故ではなく進化と呼んだ。", "FILE 043", 'recorder');
+            createLogConsole(-2.8, 0, -64, "1978の秘密記録", "【手書きメモ】\n私は怖い。だが彼を助けたい。", "FILE 044", 'notepad');
+            createLogConsole(1.8, 0, -62.5, "所長所在記録", "【保安ログ・2557年7月】\nローアン・トゥール: 公式発表は所在不明。\n最終入退はAB開発棟。同行記録はABR1977のみ。\n以後、所長権限の使用なし。\n追記: 殺害の可能性。手段の記載は欠落。", "FILE 048", 'recorder');
+
+            const runStartPanel = createButtonPanel(-2.5, 1.1, -68.5, 0, { color: 0x33ff66 });
+            runStartPanel.userData = {
+                prompt: "[E] トンネル重圧扉を開放する", action: () => {
+                    if (state.step === SEQ.SAFE_ROOM_2 && !door2_5.isOpen) {
+                        audioSys.playAlert();
+                        door2_5.isOpen = true;
+                        pressButtonPanel(runStartPanel, 0x33ff66);
+                        state.step = SEQ.TUNNEL_ENTER;
+                        document.getElementById('obj-val').textContent = "1500m 排気パイプダクトを進む";
+                        document.getElementById('loc-val').textContent = "1500m 排気パイプダクト";
+                        showSubtitle("トンネル重圧扉が開放されました。先へ進んでください。", 4000);
+                    }
+                }
+            };
+            runStartPanel.traverse(o => { if (o.isMesh) { o.userData = runStartPanel.userData; interactables.push(o); } });
+
+            /* ===== エリア4: 逃走パイプダクト ===== */
+            runFloorMesh = createFloorSlab(8, 300, 0, 0, -220);
+            createCeilingSlab(8, 300, 0, 6.5, -220);
+            createWall(0.5, 8, 300, -4.25, 4, -220); createWall(0.5, 8, 300, 4.25, 4, -220);
+            for (let z = -90; z > -360; z -= 22) { addPipeRun((z % 44 === 0) ? -4.0 : 4.0, 6.0, z, 18, 'z', 0.09); }
+            for (let z = -95; z > -365; z -= 40) { createSteamVent((z / 40 % 2 === 0) ? -4.0 : 4.0, 2.0, z, (z / 40 % 2 === 0) ? 0 : Math.PI, { period: 5.0, burstLen: 1.4, phase: Math.abs(z) * 0.01 }); }
+
+            createLogConsole(2.5, 0, -210, "バックアップ保管場所一覧", "【データ一覧】\nMEMORY SERVER A: 35%...", "FILE 045", 'usb');
+            createLogConsole(-2.2, 0, -160, "AB開発棟事故概要", "【事故概要・2557年9月】\nAB開発棟が爆発。責任者ヴァレリー・ケインを含む開発員が死亡。\nドライブデータは同時に削除。\n反対勢力の関与、ABR1977が裏で動いた、との未確認メモが残る。\n以後、ABは再現不能。", "FILE 049", 'usb');
+            buildRunObstacles();
+
+            const lever = createButtonPanel(3, 1.0, -368, 0, { color: 0x22c8ff });
+            lever.userData = {
+                prompt: "[E] 非常防壁レバーを作動", action: () => {
+                    if (state.step === SEQ.SLIME_RUN) {
+                        audioSys.playDischarge();
+                        pressButtonPanel(lever, 0x22c8ff);
+                        slimeWallMesh.position.y = -20;
+                        state.slimeActive = false;
+                        state.step = SEQ.SECURITY_ROOM;
+                        runDoor.isOpen = true;
+                        document.getElementById('run-ui').style.display = 'none';
+                        showSubtitle("<span class='speaker-3302'>3302:</span>「防壁作動！スライム群の隔離に成功しました！」", 6000);
+                        document.getElementById('obj-val').textContent = "最深部セキュリティ小部屋の情報を確認する";
+                        document.getElementById('loc-val').textContent = "最深部セキュリティ小部屋";
+                    }
+                }
+            };
+            lever.traverse(o => { if (o.isMesh) { o.userData = lever.userData; interactables.push(o); } });
+            runDoor = createDoorWithWall(8, 6, 0, -370);
+
+            /* ===== エリア5: 最深部小部屋（1977強襲の間） ===== */
+            createFloorSlab(8, 40, 0, 0, -390, true);
+            createCeilingSlab(8, 40, 0, 6.5, -390);
+            /* 左壁：中央区間だけ破壊可能パネルにする */
+            createWall(0.5, 6.5, 16, -4.25, 3.25, -378);
+            buildBreakableWall(-4.25, 3.25, -389, 8, 6.5);
+            createWall(0.5, 6.5, 8, -4.25, 3.25, -406);
+            createWall(0.5, 6.5, 40, 4.25, 3.25, -390);
+            createWall(8.5, 6.5, 0.5, 0, 3.25, -410);
+            addCableRun(4.0, 6.0, -390, 36, 'z', MAT.cableBlack, 0.15);
+            addTechPanel(4.2, 1.7, -380, -Math.PI / 2, 2);
+            addTechPanel(4.2, 1.7, -400, -Math.PI / 2, 0);
+            addWarningLamp(0, 6.3, -371.4, true);
+
+            createLogConsole(-2.5, 0, -380, "1977最終戦闘記録", "【戦闘データ】\nSOVEREIGN UNIT ONLINE: ABR1977", "FILE 046", 'usb');
+            createLogConsole(0, 0, -388, "【バックアップ計画補足】", "【手書きメモ】\n1978へ。どうか人間を嫌いにならないでくれ。", "FILE 047", 'notepad');
+
+            finalDoor = createDoorWithWall(4, 4, 0, -400);
+
+            /* 逃走用スライム壁（緑の発光・気泡・波打つ表現） */
+            const slimeGeo = new THREE.IcosahedronGeometry(4.5, 3);
+            const sMat = makeSlimeMaterial(0x33ff88, 0x0a4a22, 0.95);
+            slimeMaterials.push(sMat);
+            slimeWallMesh = new THREE.Mesh(slimeGeo, sMat);
+            slimeWallMesh.position.set(0, 2, -75); slimeWallMesh.visible = false;
+            scene.add(slimeWallMesh);
+            const slimeWallLight = new THREE.PointLight(0x33ff99, 4.5, 20, 2);
+            slimeWallMesh.add(slimeWallLight);
+            const slimeWallLight2 = new THREE.PointLight(0x33ff99, 3.0, 14, 2);
+            slimeWallLight2.position.set(0, 0, 3);
+            slimeWallMesh.add(slimeWallLight2);
+        }
+
+        function buildRunObstacles() {
+            const shutterGeo = new THREE.BoxGeometry(8, 2.8, 0.35);
+            fixBoxUV(shutterGeo, 8, 2.8, 0.35, 1.2);
+            const shutterMat = surfMat(TEX.slatHazard, { rough: 0.6, metal: 0.55 });
+            const puddleMat = makeSlimeMaterial(0x2cff7e, 0x0a4a22, 0.93);
+            slimeMaterials.push(puddleMat);
+
+            for (let z of [-120, -180, -240, -300]) {
+                const shutter = new THREE.Mesh(shutterGeo, shutterMat);
+                shutter.position.set(0, 3.2, z); scene.add(shutter);
+                runObstacles.push({ mesh: shutter, type: 'crouch', z: z });
+                addWarningLamp(-4.0, 4.8, z, true); addWarningLamp(4.0, 4.8, z, true);
+            }
+
+            for (let z of [-150, -210, -270, -330]) {
+                const puddleGeo = new THREE.IcosahedronGeometry(1, 3);
+                const puddle = new THREE.Mesh(puddleGeo, puddleMat);
+                puddle.scale.set(3.5, 0.16, 2.0);
+                puddle.position.set(0, 0.05, z); scene.add(puddle);
+                const puddleLight = new THREE.PointLight(0x33ff99, 2.2, 6, 2);
+                puddleLight.position.set(0, 0.6, z); scene.add(puddleLight);
+                runObstacles.push({ mesh: puddle, type: 'jump', z: z });
+            }
+
+            for (let z of [-135, -195, -255, -315]) {
+                const side = (z % 2 === 0) ? -2.0 : 2.0;
+                createSteamVent(side, 2.0, z, side < 0 ? Math.PI / 2 : -Math.PI / 2, { period: 1000, burstLen: 0, phase: 0 });   // 演出用見た目のみ（実噴出は下のリアルタイムトリガー）
+                const emitterGroup = new THREE.Group(); emitterGroup.position.set(side, 0, z); scene.add(emitterGroup);
+                runObstacles.push({ type: 'weave', z: z, safeSide: (side < 0 ? 'right' : 'left'), ventX: side * -1, ventZ: z });
+            }
+        }
+
+        /* 逃走中の蒸気バーストは「避けなかった時」に実際に噴き出す演出として起動 */
+        function ventBurstAt(x, y, z) {
+            for (let i = 0; i < 40; i++) {
+                const a = Math.random() * 6.28;
+                fxSmoke.emit({ x, y, z, vx: Math.cos(a) * 3, vy: 3 + Math.random() * 2, vz: Math.sin(a) * 3, life: 1.0, s0: 0.1, s1: 1.0, a: 0.55, drag: 1.0, grav: 1.0, turb: 1.0, r: 1, g: 1, b: 1 });
+            }
+            audioSys.playSteamBurst(0.6, 0.5);
+        }
+
+
+        buildMap();
+
+        function setupEntities() {
+            abr1978 = createStandardABR(0x00f0ff);
+            abr1978.position.set(1.5, 0, 5);
+            scene.add(abr1978);
+
+            abr3302 = createStandardABR(0x33ff66);
+            abr3302.position.set(-1.5, 0, -60);
+            abr3302.visible = false;
+            scene.add(abr3302);
+
+            for (let i = 0; i < 12; i++) {
+                const enemy = createStandardABR(0xff0033);
+                enemy.position.set(-4 + Math.random() * 8, 0, -18 - Math.random() * 25);
+                enemy.visible = false;
+                scene.add(enemy);
+                trapEnemies.push(enemy);
+            }
+
+            boss1977 = create1977King();
+            boss1977.position.set(-4.25, 0, -389);
+            boss1977.scale.set(0.65, 0.65, 0.65);
+            boss1977.visible = false;
+            scene.add(boss1977);
+
+            carried1978Group = createStandardABR(0x00f0ff);
+            carried1978Group.rotation.set(-Math.PI / 2, 0, 0);
+            carried1978Group.position.set(0, -0.45, -0.55);
+            carried1978Group.scale.set(0.35, 0.35, 0.35);
+            carried1978Group.visible = false;
+            camera.add(carried1978Group);
+        }
+        setupEntities();
+
+        const player = { pos: new THREE.Vector3(0, 1.6, 8), velY: 0, isGrounded: true };
+
+        function showSubtitle(text, duration = 6000) {
+            const el = document.getElementById('subtitle-box');
+            if (state.subtitleTimer) clearTimeout(state.subtitleTimer);
+            el.innerHTML = text; el.style.display = 'block';
+            state.subtitleTimer = setTimeout(() => { el.style.display = 'none'; }, duration);
+        }
+
+        let yaw = 0, pitch = 0, bobTimer = 0;
+
+        function triggerGameOver(reason) {
+            state.isPlaying = false;
+            document.exitPointerLock();
+            document.getElementById('screen-title').textContent = "YOU DIED";
+            document.getElementById('screen-title').style.color = "#ff3355";
+            document.getElementById('screen-desc').textContent = reason;
+            const btn = document.getElementById('start-btn');
+            btn.textContent = "リトライ";
+            btn.onclick = () => location.reload();
+            document.getElementById('overlay-screen').style.display = 'flex';
+        }
+
+        function dischargeAttack() {
+            if (state.charge < 20 || state.inCutscene && state.step !== SEQ.BOSS_ATTACK) return;
+            if (state.charge < 20) return;
+            state.charge -= 20;
+            document.getElementById('charge-val').textContent = Math.floor(state.charge) + "%";
+            audioSys.playDischarge();
+            triggerDischargeFX();
+
+            const flashEl = document.getElementById('flash-overlay');
+            flashEl.style.background = "rgba(0, 240, 255, 0.7)";
+            setTimeout(() => { flashEl.style.background = "rgba(0, 240, 255, 0)"; }, 120);
+
+            if (state.step === SEQ.BOSS_ATTACK && state.rescueTimer > 0) {
+                state.step = SEQ.RESCUED;
+                audioSys.playAlert();
+                bossTriggerAction('flinch');
+                state.shake = 0.6;
+
+                boss1977.position.z = -395;
+
+                refs.leftLowerGroup.remove(abr1978);
+                abr1978.visible = false;
+
+                state.isCarrying1978 = true;
+                deviceGroup.visible = false;
+                carried1978Group.visible = true;
+
+                showSubtitle("<span class='speaker-1978'>1978:</span>「う……あ……ジッ…ジジッ…」", 7000);
+                document.getElementById('comp-val').textContent = "ABR1978 (重度損傷・抱留中)";
+                document.getElementById('obj-val').textContent = "仰向けの1978を抱えて奥の最終脱出扉へ！";
+
+                finalDoor.isOpen = true;
+                state.step = SEQ.ESCAPE;
+            }
+        }
+
+        const controls = { fwd: false, bwd: false, left: false, right: false, run: false };
+
+        document.addEventListener('keydown', (e) => {
+            if (!state.isPlaying) return;
+            if (state.modalOpen) { if (e.code === 'Escape') closeLog(); return; }
+            if (state.inCutscene) return;
+
+            if (e.code === 'KeyW') controls.fwd = true;
+            if (e.code === 'KeyS') controls.bwd = true;
+            if (e.code === 'KeyA') controls.left = true;
+            if (e.code === 'KeyD') controls.right = true;
+            if (e.shiftKey) controls.run = true;
+            if (e.code === 'KeyC' || e.code === 'ControlLeft') { state.isCrouching = true; state.targetCamY = 0.8; }
+            if (e.code === 'Space' && player.isGrounded) { player.velY = 6.0; player.isGrounded = false; }
+            if (e.code === 'KeyF') flashlight.visible = !flashlight.visible;
+
+            if (e.code === 'KeyE') {
+                if (currentTarget && currentTarget.userData && typeof currentTarget.userData.action === 'function') {
+                    currentTarget.userData.action();
+                }
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW') controls.fwd = false;
+            if (e.code === 'KeyS') controls.bwd = false;
+            if (e.code === 'KeyA') controls.left = false;
+            if (e.code === 'KeyD') controls.right = false;
+            if (!e.shiftKey) controls.run = false;
+            if (e.code === 'KeyC' || e.code === 'ControlLeft') { state.isCrouching = false; state.targetCamY = 1.6; }
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === document.body && state.isPlaying && !state.modalOpen && !state.inCutscene) {
+                yaw -= e.movementX * 0.0025;
+                pitch -= e.movementY * 0.0025;
+                pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+                const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+                const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+                camera.quaternion.multiplyQuaternions(qYaw, qPitch);
+            }
+        });
+        document.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && state.isPlaying && !state.modalOpen) dischargeAttack();
+        });
+
+        function applyCollision(newPos) {
+            let groundY = 0;
+            const hRadius = 0.3;
+            for (let p of platformColliders) {
+                if (newPos.x > p.box.min.x && newPos.x < p.box.max.x && newPos.z > p.box.min.z && newPos.z < p.box.max.z) {
+                    if (player.pos.y >= p.topY - 0.2) groundY = Math.max(groundY, p.topY);
+                }
+            }
+            const pBox = new THREE.Box3(
+                new THREE.Vector3(newPos.x - hRadius, newPos.y - (state.isCrouching ? 0.6 : 1.2), newPos.z - hRadius),
+                new THREE.Vector3(newPos.x + hRadius, newPos.y + 0.2, newPos.z + hRadius)
+            );
+            for (let w of wallColliders) {
+                if (w.doorRef && w.doorRef.isOpen) continue;
+                if (pBox.intersectsBox(w.box)) return groundY;
+            }
+            player.pos.copy(newPos);
+            return groundY;
+        }
+
+        const clock = new THREE.Clock();
+
+        function update() {
+            if (!state.isPlaying || state.modalOpen) return;
+            const dt = Math.min(clock.getDelta(), 0.1);
+            const time = clock.getElapsedTime();
+
+            if (state.charge < 100) {
+                state.charge = Math.min(100, state.charge + 10 * dt);
+                document.getElementById('charge-val').textContent = Math.floor(state.charge) + "%";
+            }
+
+            updateShutters(dt, time);
+            updateSteamVents(dt, time);
+            updateWarningLamps(time);
+            updateBreakWallDebris(dt);
+            updateAmbientDust(dt);
+            updateTablet(dt);
+            updateDeviceFX(dt, time);
+            fxSmoke.update(dt, time); fxSpark.update(dt, time); fxDust.update(dt, time); fxSlimeFX.update(dt, time);
+            slimeMaterials.forEach(m => m.uniforms.uTime.value = time);
+            if (slimeWallMesh && slimeWallMesh.visible) {
+                slimeWallMesh.rotation.y += dt * 0.06;
+                slimeWallMesh.scale.set(1 + Math.sin(time * 2.4) * 0.04, 1 + Math.cos(time * 2.0) * 0.04, 1 + Math.sin(time * 2.8) * 0.04);
+                if (Math.random() < dt * 6) fxSlimeFX.emit({ x: slimeWallMesh.position.x + (Math.random() - 0.5) * 6, y: 0.3 + Math.random() * 3, z: slimeWallMesh.position.z + (Math.random() - 0.5) * 3, vx: 0, vy: 0.4 + Math.random() * 0.4, vz: 0, life: 1.6, s0: 0.05, s1: 0.02, a: 0.5, r: 0.4, g: 1, b: 0.6 });
+            }
+
+            /* シーケンス進行制御 */
+            if (state.step === SEQ.START_SAFE && door1.isOpen && player.pos.z < -12) {
+                door1.isOpen = false;
+                state.step = SEQ.TRAP_ROOM;
+                document.getElementById('obj-val').textContent = "敵12体の包囲網を突破せよ！";
+                document.getElementById('loc-val').textContent = "敵伏撃エリア";
+                trapEnemies.forEach(e => e.visible = true);
+            } else if (state.step === SEQ.TRAP_ROOM) {
+                if (state.trapEnemiesActive && !state.inCutscene) {
+                    trapEnemies.forEach(e => {
+                        const dir = player.pos.clone().sub(e.position); dir.y = 0;
+                        const d = dir.length(); dir.normalize();
+                        e.position.addScaledVector(dir, 2.5 * dt);
+                        e.lookAt(player.pos.x, e.position.y, player.pos.z);
+                        animateStandardABR(e, dt, d > 0.6, 3.2);
+                    });
+                }
+                if (player.pos.z < -35 && !state.trapJammingPlayed) {
+                    state.trapJammingPlayed = true;
+                    state.trapEnemiesActive = false;
+                    audioSys.playAlert(); audioSys.playDischarge();
+                    const flashEl = document.getElementById('flash-overlay');
+                    if (flashEl) { flashEl.style.background = "rgba(51, 255, 102, 0.4)"; setTimeout(() => { flashEl.style.background = "rgba(0, 240, 255, 0)"; }, 250); }
+                    trapEnemies.forEach(e => { e.eyeParts && e.eyeParts.forEach(p => { p.material.color.setHex(0x222222); p.material.emissive.setHex(0x000000); p.material.emissiveIntensity = 0; }); });
+                    showSubtitle("<span class='speaker-3302'>通信(？？？):</span>「――聞こえるか！広域妨害電波を照射した！今のうちに奥へ抜けろ！」", 6000);
+                    door2.isOpen = true;
+                }
+                if (player.pos.z < -52) {
+                    door2.isOpen = false;
+                    state.step = SEQ.SAFE_ROOM_2;
+                    abr3302.visible = true;
+                    document.getElementById('comp-val').textContent = "ABR1978, ABR3302";
+                    if (!state.meet3302CutscenePlayed) {
+                        state.meet3302CutscenePlayed = true;
+                        audioSys.playAlert();
+                        showSubtitle(
+                            "<span class='speaker-1978'>1978:</span>「3302!!おかげで助かったよ」<br>" +
+                            "<span class='speaker-3302'>3302:</span>「どうも。でもこの先は気を付けてください。妨害電波が効くのは1500以前の雑魚だけですから」<br>" +
+                            "<span class='speaker-3302'>3302:</span>「あと奴がおそらくこの辺まで来ています。」",
+                            9000
+                        );
+                    }
+                    document.getElementById('obj-val').textContent = "トンネル重圧扉を開放する";
+                }
+            }
+
+            if (state.step === SEQ.TUNNEL_ENTER && player.pos.z < -110 && !state.slimeMoviePlayed) {
+                state.slimeMoviePlayed = true;
+                state.step = SEQ.SLIME_RUN; state.slimeActive = true;
+                document.getElementById('run-ui').style.display = 'block';
+                slimeWallMesh.visible = true;
+            }
+
+            if (state.slimeActive) {
+                let slimeSpeed = 9.5;
+                if (state.staminaPenalty > 0) { state.staminaPenalty -= dt; slimeSpeed = 12.0; }
+                slimeWallMesh.position.z -= slimeSpeed * dt;
+
+                const warnEl = document.getElementById('obstacle-warning');
+                let warningText = "";
+                runObstacles.forEach(obs => {
+                    const distZ = Math.abs(player.pos.z - obs.z);
+                    if (distZ < 8.0) {
+                        if (obs.type === 'crouch') warningText = "⚠ 防爆シャッター！ [C] で潜り抜けろ！";
+                        if (obs.type === 'jump') warningText = "⚠ スライム沼！ [Space] で跳べ！";
+                        if (obs.type === 'weave') warningText = `⚠ 蒸気噴出！ [${obs.safeSide === 'left' ? 'A' : 'D'}] で避ける！`;
+                    }
+                    if (distZ < 1.2) {
+                        let hit = false;
+                        if (obs.type === 'crouch' && !state.isCrouching) hit = true;
+                        if (obs.type === 'jump' && player.isGrounded) hit = true;
+                        if (obs.type === 'weave') {
+                            if (obs.safeSide === 'left' && player.pos.x > -1.0) hit = true;
+                            if (obs.safeSide === 'right' && player.pos.x < 1.0) hit = true;
+                            if (!obs.vented) { ventBurstAt(obs.ventX || 0, 1.5, obs.z); obs.vented = true; }
+                        }
+                        if (hit && state.staminaPenalty <= 0) {
+                            state.staminaPenalty = 1.2;
+                            audioSys.playHit();
+                            document.getElementById('danger-overlay').style.background = "rgba(255,50,0,0.6)";
+                            setTimeout(() => { document.getElementById('danger-overlay').style.background = "rgba(0,0,0,0)"; }, 150);
+                        }
+                    } else obs.vented = false;
+                });
+                if (warningText) { warnEl.textContent = warningText; warnEl.style.display = 'block'; } else warnEl.style.display = 'none';
+
+                const totalDist = 300;
+                const pProg = Math.min(100, Math.max(0, ((-70 - player.pos.z) / totalDist) * 100));
+                const sProg = Math.min(100, Math.max(0, ((-70 - slimeWallMesh.position.z) / totalDist) * 100));
+                document.getElementById('player-progress').style.width = pProg + "%";
+                document.getElementById('slime-progress').style.width = Math.max(0, sProg) + "%";
+
+                if (slimeWallMesh.position.z <= player.pos.z) triggerGameOver("スライムの奔流に呑み込まれました。");
+            }
+
+            if (state.step === SEQ.SECURITY_ROOM && !state.ambushTriggered) {
+                if (player.pos.z < -388) { state.ambushTriggered = true; trigger1977AmbushSequence(); }
+            }
+            if (state.step === SEQ.BOSS_ATTACK && !state.inCutscene) {
+                state.rescueTimer -= dt;
+                if (state.rescueTimer <= 0) triggerPlayerGrabbedKillSequence();
+            }
+            if (state.step === SEQ.ESCAPE && player.pos.z < -401) {
+                state.isPlaying = false;
+                document.exitPointerLock();
+                document.getElementById('screen-title').textContent = "CHAPTER 5 CLEAR";
+                document.getElementById('screen-desc').textContent = "1977の襲撃から間一髪で1978を救出した。しかしメモリデータを失った\n\n「う……あ……あなたは……？」\n\nTo be continued in Chapter 6: 「1978救出・記憶再生編」";
+                document.getElementById('start-btn').textContent = "タイトルへ戻る";
+                document.getElementById('start-btn').onclick = () => location.reload();
+                document.getElementById('overlay-screen').style.display = 'flex';
+            }
+
+            /* プレイヤー移動 */
+            if (!state.inCutscene) {
+                let speed = controls.run ? 11.0 : (state.isCrouching ? 4.0 : 6.0);
+                if (state.staminaPenalty > 0) speed *= 0.5;
+                const isMoving = controls.fwd || controls.bwd || controls.left || controls.right;
+                let groundY = 0;
+                if (isMoving) {
+                    bobTimer += dt * (controls.run ? 13.0 : (state.isCrouching ? 6.0 : 9.0));
+                    const dir = new THREE.Vector3();
+                    if (controls.fwd) dir.z -= 1; if (controls.bwd) dir.z += 1;
+                    if (controls.left) dir.x -= 1; if (controls.right) dir.x += 1;
+                    dir.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw));
+                    dir.normalize();
+                    const nextPos = player.pos.clone().addScaledVector(dir, speed * dt);
+                    groundY = applyCollision(nextPos);
+                } else groundY = applyCollision(player.pos.clone());
+
+                player.velY -= 15.0 * dt;
+                player.pos.y += player.velY * dt;
+                const baseCamY = groundY + state.targetCamY;
+                if (player.pos.y <= baseCamY) { player.pos.y = baseCamY; player.velY = 0; player.isGrounded = true; }
+                else player.isGrounded = false;
+
+                let bobAmountY = controls.run ? 0.06 : (state.isCrouching ? 0.015 : 0.035);
+                let bobAmountX = controls.run ? 0.03 : (state.isCrouching ? 0.008 : 0.018);
+                const offY = isMoving && player.isGrounded ? Math.sin(bobTimer) * bobAmountY : 0;
+                const offX = isMoving && player.isGrounded ? Math.cos(bobTimer * 0.5) * bobAmountX : 0;
+                if (isMoving && player.isGrounded) {
+                    const stepInterval = controls.run ? 320 : (state.isCrouching ? 650 : 480);
+                    if (Date.now() - audioSys.lastFootstepTime > stepInterval) {
+                        audioSys.playFootstep(false, state.isCrouching);
+                        audioSys.lastFootstepTime = Date.now();
+                    }
+                }
+                let shakeX = 0, shakeY = 0, shakeZ = 0;
+                if (state.shake > 0.001) {
+                    state.shake *= Math.max(0, 1 - dt * 5.0);
+                    shakeX = (Math.random() - 0.5) * state.shake * 0.12;
+                    shakeY = (Math.random() - 0.5) * state.shake * 0.12;
+                    shakeZ = (Math.random() - 0.5) * state.shake * 0.06;
+                }
+                camera.position.set(player.pos.x + offX + shakeX, player.pos.y + offY + shakeY, player.pos.z + shakeZ);
+                fillLight.position.set(player.pos.x, player.pos.y + 0.5, player.pos.z);
+
+                if (state.isCarrying1978) carried1978Group.position.y = -0.45 + Math.sin(bobTimer * 2) * 0.015;
+            }
+
+            /* 同行AI追従 */
+            if (abr1978.visible && !refs.leftLowerGroup.children.includes(abr1978)) {
+                const target1978 = player.pos.clone().add(new THREE.Vector3(1.2, -1.6, 1.2));
+                const moved = abr1978.position.distanceTo(target1978) > 0.5;
+                if (moved) { abr1978.position.lerp(target1978, 6.0 * dt); abr1978.lookAt(player.pos.x, abr1978.position.y, player.pos.z); }
+                animateStandardABR(abr1978, dt, moved, 3.5);
+            }
+            if (abr3302.visible && !refs.rightLowerGroup.children.includes(abr3302) && state.step < SEQ.BOSS_AMBUSH_TRIGGERED) {
+                const target3302 = player.pos.clone().add(new THREE.Vector3(-1.2, -1.6, 1.2));
+                const moved = abr3302.position.distanceTo(target3302) > 0.5;
+                if (moved) { abr3302.position.lerp(target3302, 5.5 * dt); abr3302.lookAt(player.pos.x, abr3302.position.y, player.pos.z); }
+                animateStandardABR(abr3302, dt, moved, 3.2);
+            }
+
+            updateBoss1977(dt, time);
+
+            /* インタラクション判定 */
+            if (!state.inCutscene && !state.modalOpen) {
+                const ray = new THREE.Raycaster(); ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+                const hits = ray.intersectObjects(interactables);
+                const promptEl = document.getElementById('interaction-prompt');
+                if (hits.length > 0 && hits[0].distance < 4.0) {
+                    currentTarget = hits[0].object;
+                    promptEl.textContent = currentTarget.userData.prompt;
+                    promptEl.style.display = 'block';
+                } else { currentTarget = null; promptEl.style.display = 'none'; }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function openLog(title, text, mediaType) {
+            state.modalOpen = true; document.exitPointerLock();
+            document.getElementById('log-title').textContent = title;
+            document.getElementById('log-body').textContent = text;
+            document.getElementById('log-modal').style.display = 'block';
+            setTabletOpen(true, mediaType);
+            audioSys.playClick();
+            if (mediaType === 'recorder') audioSys.startVoice();
+        }
+        function closeLog() {
+            document.getElementById('log-modal').style.display = 'none';
+            state.modalOpen = false; document.body.requestPointerLock();
+            setTabletOpen(false);
+            audioSys.stopVoice();
+            audioSys.playClick();
+        }
+
+        function startGame() {
+            audioSys.init();
+            document.getElementById('overlay-screen').style.display = 'none';
+            document.body.requestPointerLock();
+            state.isPlaying = true;
+            clock.start();
+        }
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        animate();
+
+    </script>
+</body>
+</html>
